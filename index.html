@@ -33,6 +33,13 @@
 .output-box{padding:14px;background:#edf5ef;border:1px solid #d3e5d8;border-radius:12px;margin-top:12px}
 .photo-preview{max-width:100%;max-height:280px;object-fit:contain;border-radius:12px;margin-top:10px}
 .log-item{padding:10px;border-bottom:1px solid var(--line)}.log-item:last-child{border:0}
+
+.mix-suggestions{display:none;max-height:230px;overflow:auto;margin-top:6px;border:1px solid var(--border,#555);border-radius:10px;background:var(--panel,#202528)}
+.mix-suggestions.show{display:block}
+.mix-suggestion{display:block;width:100%;text-align:left;padding:11px 12px;border:0;border-bottom:1px solid rgba(128,128,128,.22);background:transparent;color:inherit;font:inherit;font-size:14px;cursor:pointer}
+.mix-suggestion:last-child{border-bottom:0}
+.mix-suggestion:active{background:rgba(100,170,210,.18)}
+.mix-selected{font-size:12px;color:var(--muted,#999);margin-top:5px}
 </style></head>
 <body>
 <header class="hero"><div class="wrap"><div class="top"><div class="brand">🌱 AgroLista Pro</div><span class="tag">Catálogo de consulta · Brasil</span></div><h1>Produtos agrotóxicos formulados</h1><p>Pesquise e consulte informações cadastrais de produtos formulados a partir da base oficial do Agrofit/MAPA.</p></div></header>
@@ -60,9 +67,10 @@
 <h2>4. AgroMix — compatibilidade de caldas</h2>
 <p class="source">Selecione dois produtos do catálogo para organizar uma consulta de mistura no tanque. Esta versão ainda não possui uma base validada de compatibilidade; por isso, não aprova nem reprova misturas automaticamente.</p>
 <div class="toolbar" style="grid-template-columns:1fr 1fr">
-<div class="field"><label for="mixA">Primeiro produto</label><select id="mixA" disabled><option value="">Carregue o CSV primeiro</option></select></div>
-<div class="field"><label for="mixB">Segundo produto</label><select id="mixB" disabled><option value="">Carregue o CSV primeiro</option></select></div>
+<div class="field"><label for="mixASearch">Primeiro produto — pesquise pelo nome</label><input id="mixASearch" type="search" placeholder="Digite o nome do produto…" disabled autocomplete="off"><input id="mixA" type="hidden" value=""><div class="mix-suggestions" id="mixAResults"></div></div>
+<div class="field"><label for="mixBSearch">Segundo produto — pesquise pelo nome</label><input id="mixBSearch" type="search" placeholder="Digite o nome do produto…" disabled autocomplete="off"><input id="mixB" type="hidden" value=""><div class="mix-suggestions" id="mixBResults"></div></div>
 </div>
+<p class="source">Digite algumas letras do nome comercial ou ingrediente ativo e escolha o produto na lista curta de resultados.</p>
 <div class="actions"><button class="btn" id="checkMix" disabled>Consultar mistura</button><button class="btn secondary" id="clearMix" disabled>Limpar</button></div>
 <div id="mixResult" class="detail" aria-live="polite"></div>
 <div class="notice" style="margin:14px 0 0"><strong>Segurança:</strong> “sem informação” não significa compatível. Não misture produtos com base apenas nesta consulta. Confira as bulas e rótulos vigentes de todos os produtos, as restrições de mistura, a cultura e o alvo autorizados; em caso de dúvida, consulte o responsável técnico ou os titulares dos registros. Não faça teste de mistura como substituto dessas verificações.</div>
@@ -233,32 +241,48 @@ function get(r,key){let i=detect(headers,key);return i>=0?(r[i]||'').trim():''}
 function setOptions(id,values){let el=$(id),old=el.value,unique=new Set();el.innerHTML='<option value="">'+(id==='classFilter'?'Todas as classes':'Todas as formulações')+'</option>';for(const v of values){if(v)unique.add(v)}[...unique].sort((a,b)=>a.localeCompare(b,'pt-BR')).forEach(v=>{let o=document.createElement('option');o.value=v;o.textContent=v;el.append(o)});el.value=old}
 let mixProducts=[];
 function populateMix(){
- const LIMIT=1500,seen=new Set();mixProducts=[];
+ const seen=new Set();mixProducts=[];
+ const normKey=s=>norm(String(s||'')).replace(/[^a-z0-9]/g,'');
  for(let i=0;i<rows.length;i++){
   const r=rows[i],name=get(r,'produto'),active=get(r,'ativo'),form=get(r,'form'),reg=get(r,'registro');
-  const normKey=s=>norm(String(s||'')).replace(/[^a-z0-9]/g,'');
   const key=reg?`reg:${normKey(reg)}`:`prod:${normKey(name)}|${normKey(active)}|${normKey(form)}`;
   if(!name||seen.has(key))continue;
   seen.add(key);mixProducts.push({rowIndex:i,label:name+(active?' — '+active:'')});
  }
- ['mixA','mixB'].forEach(id=>{
-  let el=$(id),old=el.value;el.innerHTML='<option value="">Selecione um produto</option>';
-  const count=Math.min(mixProducts.length,LIMIT);
-  for(let j=0;j<count;j++){
-   let o=document.createElement('option');o.value=String(j);o.textContent=mixProducts[j].label;el.append(o);
-  }
-  el.value=old;el.disabled=false;
+ ['A','B'].forEach(which=>{
+  const input=$('mix'+which+'Search'),hidden=$('mix'+which),results=$('mix'+which+'Results');
+  input.disabled=false;input.value='';hidden.value='';results.innerHTML='';results.classList.remove('show');
  });
  $('checkMix').disabled=false;$('clearMix').disabled=false;
- if(mixProducts.length>LIMIT)$('loadStatus').textContent+=' AgroMix exibe até 1.500 produtos únicos para manter o celular leve.';
- $('mixCount')?.remove();
 }
+function searchMix(which){
+ const input=$('mix'+which+'Search'),hidden=$('mix'+which),results=$('mix'+which+'Results');
+ const q=norm(input.value.trim());hidden.value='';results.innerHTML='';
+ if(!q){results.classList.remove('show');return}
+ const matches=[];
+ for(let i=0;i<mixProducts.length&&matches.length<25;i++){
+  const item=mixProducts[i];
+  if(norm(item.label).includes(q))matches.push({index:i,label:item.label});
+ }
+ if(!matches.length){results.innerHTML='<div class="mix-suggestion">Nenhum produto encontrado. Tente outro nome.</div>';results.classList.add('show');return}
+ matches.forEach(item=>{
+  const btn=document.createElement('button');btn.type='button';btn.className='mix-suggestion';btn.textContent=item.label;
+  btn.addEventListener('click',()=>{
+   hidden.value=String(item.index);input.value=item.label;results.classList.remove('show');results.innerHTML='';
+  });
+  results.append(btn);
+ });
+ results.classList.add('show');
+}
+$('mixASearch').addEventListener('input',()=>searchMix('A'));
+$('mixBSearch').addEventListener('input',()=>searchMix('B'));
+
 function load(text,name){let data=parseCSV(text.replace(/^\uFEFF/,''));if(data.length<2)throw Error('O arquivo parece vazio ou inválido.');headers=data[0].map(x=>x.trim());let required=['produto','ativo','classe'];if(required.every(k=>detect(headers,k)<0))throw Error('Não reconheci as colunas do CSV. Confira se selecionou o arquivo Produto Formulado.CSV do MAPA.');rows=data.slice(1).filter(r=>r.some(x=>x.trim()));filtered=rows;page=0;$('total').textContent=rows.length.toLocaleString('pt-BR');$('loaded').textContent=new Date().toLocaleDateString('pt-BR');$('loadStatus').textContent=`Arquivo carregado: ${name}. ${rows.length.toLocaleString('pt-BR')} registros encontrados.`;['q','classFilter','formFilter','clear','export'].forEach(id=>$(id).disabled=false);setOptions('classFilter',rows.map(r=>get(r,'classe')));setOptions('formFilter',rows.map(r=>get(r,'form')));populateMix();filter()}
 function filter(){let q=norm($('q').value),cl=$('classFilter').value,fo=$('formFilter').value;filtered=rows.filter(r=>(!q||r.some(c=>norm(c).includes(q)))&&(!cl||get(r,'classe')===cl)&&(!fo||get(r,'form')===fo));page=0;render()}
 function render(){let start=page*PAGE,part=filtered.slice(start,start+PAGE),tb=$('tbody');tb.innerHTML='';if(!part.length){tb.innerHTML='<tr><td colspan="6" class="empty">Nenhum produto encontrado com esses filtros.</td></tr>'}else part.forEach(r=>{let tr=document.createElement('tr');[['produto','product'],['registro',''],['ativo',''],['classe',''],['form',''],['titular','']].forEach(([k,cls])=>{let td=document.createElement('td');td.textContent=get(r,k)||'—';if(cls)td.className=cls;tr.append(td)});tr.tabIndex=0;tr.title='Clique para ver os campos disponíveis';tr.addEventListener('click',()=>showDetail(r));tb.append(tr)});$('shown').textContent=filtered.length.toLocaleString('pt-BR');$('pageInfo').textContent=filtered.length?`Exibindo ${start+1}–${Math.min(start+PAGE,filtered.length)} de ${filtered.length.toLocaleString('pt-BR')}`:'0 produtos';$('prev').disabled=page===0;$('next').disabled=start+PAGE>=filtered.length;$('export').disabled=!filtered.length}
 function showDetail(r){let box=$('detail'),grid=$('detailGrid');grid.innerHTML='';headers.forEach((h,i)=>{let val=(r[i]||'').trim();if(!val)return;let div=document.createElement('div');div.className='kv';let sm=document.createElement('small');sm.textContent=h;let strong=document.createElement('strong');strong.textContent=val;div.append(sm,strong);grid.append(div)});box.classList.add('show');box.scrollIntoView({behavior:'smooth',block:'nearest'})}
-$('checkMix').addEventListener('click',()=>{let a=$('mixA').value,b=$('mixB').value,box=$('mixResult');if(a===''||b===''){box.innerHTML='<p class="notice">Selecione dois produtos para consultar.</p>';box.classList.add('show');return}if(a===b){box.innerHTML='<p class="notice">Selecione dois produtos diferentes.</p>';box.classList.add('show');return}let ra=rows[mixProducts[Number(a)]?.rowIndex],rb=rows[mixProducts[Number(b)]?.rowIndex];const esc=x=>String(x||'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));box.innerHTML=`<h3 style="margin:0 0 8px">Resultado da consulta cadastral</h3><p><strong>Produto 1:</strong> ${esc(get(ra,'produto'))}<br><strong>Ingrediente ativo:</strong> ${esc(get(ra,'ativo'))}<br><strong>Formulação:</strong> ${esc(get(ra,'form'))}</p><p><strong>Produto 2:</strong> ${esc(get(rb,'produto'))}<br><strong>Ingrediente ativo:</strong> ${esc(get(rb,'ativo'))}<br><strong>Formulação:</strong> ${esc(get(rb,'form'))}</p><div class="notice" style="margin:12px 0 0"><strong>⚪ Compatibilidade não verificada.</strong><br>O catálogo identifica os produtos, mas não contém dados técnicos validados para afirmar se esta mistura é física, química ou biologicamente compatível. Não interprete este resultado como autorização para misturar.</div><p class="source">Próximo passo: confira as instruções e restrições de mistura nas bulas oficiais de ambos os produtos e confirme com o responsável técnico/titulares dos registros.</p>`;box.classList.add('show');box.scrollIntoView({behavior:'smooth',block:'nearest'})});
-$('clearMix').addEventListener('click',()=>{$('mixA').value='';$('mixB').value='';$('mixResult').classList.remove('show');$('mixResult').innerHTML=''});
+$('checkMix').addEventListener('click',()=>{let a=$('mixA').value,b=$('mixB').value,box=$('mixResult');if(a===''||b===''){box.innerHTML='<p class="notice">Pesquise e escolha os dois produtos nas sugestões.</p>';box.classList.add('show');return}if(a===b){box.innerHTML='<p class="notice">Selecione dois produtos diferentes.</p>';box.classList.add('show');return}let ra=rows[mixProducts[Number(a)]?.rowIndex],rb=rows[mixProducts[Number(b)]?.rowIndex];const esc=x=>String(x||'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));box.innerHTML=`<h3 style="margin:0 0 8px">Resultado da consulta cadastral</h3><p><strong>Produto 1:</strong> ${esc(get(ra,'produto'))}<br><strong>Ingrediente ativo:</strong> ${esc(get(ra,'ativo'))}<br><strong>Formulação:</strong> ${esc(get(ra,'form'))}</p><p><strong>Produto 2:</strong> ${esc(get(rb,'produto'))}<br><strong>Ingrediente ativo:</strong> ${esc(get(rb,'ativo'))}<br><strong>Formulação:</strong> ${esc(get(rb,'form'))}</p><div class="notice" style="margin:12px 0 0"><strong>⚪ Compatibilidade não verificada.</strong><br>O catálogo identifica os produtos, mas não contém dados técnicos validados para afirmar se esta mistura é física, química ou biologicamente compatível. Não interprete este resultado como autorização para misturar.</div><p class="source">Próximo passo: confira as instruções e restrições de mistura nas bulas oficiais de ambos os produtos e confirme com o responsável técnico/titulares dos registros.</p>`;box.classList.add('show');box.scrollIntoView({behavior:'smooth',block:'nearest'})});
+$('clearMix').addEventListener('click',()=>{['A','B'].forEach(w=>{$('mix'+w).value='';$('mix'+w+'Search').value='';$('mix'+w+'Results').innerHTML='';$('mix'+w+'Results').classList.remove('show')});$('mixResult').classList.remove('show');$('mixResult').innerHTML=''});
 function formatAmount(value,unit){if(!Number.isFinite(value))return '—';if(unit==='L')return `${(value*1000).toLocaleString('pt-BR',{maximumFractionDigits:4})} mL`;if(unit==='kg')return `${(value*1000).toLocaleString('pt-BR',{maximumFractionDigits:4})} g`;return `${value.toLocaleString('pt-BR',{maximumFractionDigits:4})} ${unit}`}
 let bottleProductCount=0;const bottleSizes=[1,2,5,10];function setBottleSize(v){$('bottleSize').value=String(v);$('bottleSizeLabel').textContent=String(v)}$('bottleMinus').addEventListener('click',()=>{let i=bottleSizes.indexOf(Number($('bottleSize').value));setBottleSize(bottleSizes[Math.max(0,i-1)])});$('bottlePlus').addEventListener('click',()=>{let i=bottleSizes.indexOf(Number($('bottleSize').value));setBottleSize(bottleSizes[Math.min(bottleSizes.length-1,i+1)])});
 function renumberBottleProducts(){
