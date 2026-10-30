@@ -21,15 +21,41 @@
 .agro-day{border:1px solid #dce5de;border-radius:12px;padding:12px;background:#f6f9f6}
 .agro-day strong{display:block}.agro-day small{color:#63776a}
 .agro-subtitle{margin:22px 0 7px;font-size:18px}
+
+.agro-nav{display:flex;gap:8px;overflow:auto;padding:10px 0 16px}
+.agro-nav a{white-space:nowrap;text-decoration:none;background:#e7f1ea;color:#174b35;padding:9px 13px;border-radius:30px;font-weight:650}
+.module-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.module-tile{border:1px solid var(--line);background:#f7faf7;border-radius:13px;padding:14px}
+.module-tile strong{display:block;font-size:16px}.module-tile small{color:var(--muted)}
+.field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.field-grid label{display:block;font-weight:600;color:var(--muted);font-size:13px}
+.field-grid input,.field-grid select,.field-grid textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:white;color:var(--ink);font:inherit;margin-top:5px}
+.output-box{padding:14px;background:#edf5ef;border:1px solid #d3e5d8;border-radius:12px;margin-top:12px}
+.photo-preview{max-width:100%;max-height:280px;object-fit:contain;border-radius:12px;margin-top:10px}
+.log-item{padding:10px;border-bottom:1px solid var(--line)}.log-item:last-child{border:0}
 </style></head>
 <body>
 <header class="hero"><div class="wrap"><div class="top"><div class="brand">🌱 AgroLista Pro</div><span class="tag">Catálogo de consulta · Brasil</span></div><h1>Produtos agrotóxicos formulados</h1><p>Pesquise e consulte informações cadastrais de produtos formulados a partir da base oficial do Agrofit/MAPA.</p></div></header>
 <main class="main wrap">
+<nav class="agro-nav" aria-label="Navegação AgroCentral">
+<a href="#central">🌱 AgroCentral</a><a href="#agroclimaPanel">🌦️ AgroClima</a><a href="#radarPanel">🌧️ Radar</a><a href="#calibracaoPanel">⚙️ Calibração</a><a href="#monitorPanel">🌾 AgroMonitor</a><a href="#catalogPanel">🧪 Catálogo</a>
+</nav>
+<section class="panel" id="central">
+<h2>🌱 AgroCentral IA — central de ferramentas</h2>
+<p class="source">Acesse os módulos do AgroLista Pro em um só lugar. O módulo AgroDrone IA não faz parte desta versão.</p>
+<div class="module-grid">
+<a class="module-tile" href="#agroclimaPanel"><strong>🌦️ AgroClima IA</strong><small>Tempo atual, previsão e alertas</small></a>
+<a class="module-tile" href="#radarPanel"><strong>🌧️ Radar de chuva</strong><small>Radar externo e acompanhamento</small></a>
+<a class="module-tile" href="#calibracaoPanel"><strong>⚙️ AgroCalibração</strong><small>Vazão e calibração de pulverizador</small></a>
+
+<a class="module-tile" href="#monitorPanel"><strong>🌾 AgroMonitor</strong><small>Registro e análise visual da lavoura</small></a>
+<a class="module-tile" href="#catalogPanel"><strong>🧪 AgroLista + AgroMix</strong><small>Produtos, fichas e consulta cadastral</small></a>
+</div></section>
 <div class="notice"><strong>⚠️ Consulta informativa:</strong> este catálogo não substitui bula, rótulo, receituário agronômico nem consulta oficial. A autorização depende da cultura, alvo, modalidade de uso e situação do registro.</div>
 <section class="stats"><div class="stat"><small>Produtos carregados</small><strong id="total">0</strong></div><div class="stat"><small>Resultados encontrados</small><strong id="shown">0</strong></div><div class="stat"><small>Base carregada em</small><strong id="loaded" style="font-size:16px">—</strong></div></section>
 <section class="panel"><h2>1. Carregar a base oficial</h2><p class="source">Baixe o recurso “Produto Formulado.CSV” no portal de Dados Abertos do MAPA e selecione o arquivo aqui. O arquivo fica no seu navegador; não é enviado a nenhum servidor.</p><div class="actions"><a class="btn" href="https://dados.agricultura.gov.br/dataset/sistema-de-agrotoxicos-fitossanitarios-agrofit" target="_blank" rel="noopener">Abrir base oficial do MAPA ↗</a><label class="btn secondary" for="csvFile">Selecionar arquivo CSV</label><input id="csvFile" type="file" accept=".csv,text/csv" hidden></div><div class="status" id="loadStatus" role="status">Nenhuma base carregada. Para consultar todos os produtos, importe o CSV oficial.</div></section>
 <section class="panel"><h2>2. Pesquisar produtos</h2><div class="toolbar"><div class="field"><label for="q">Nome comercial, ingrediente ativo, registro ou fabricante</label><input id="q" placeholder="Ex.: nome do produto ou ingrediente ativo" disabled></div><div class="field"><label for="classFilter">Classe agronômica</label><select id="classFilter" disabled><option value="">Todas as classes</option></select></div><div class="field"><label for="formFilter">Formulação</label><select id="formFilter" disabled><option value="">Todas as formulações</option></select></div></div><div class="actions"><button class="btn secondary" id="clear" disabled>Limpar filtros</button><button class="btn secondary" id="export" disabled>Exportar resultados CSV</button></div></section>
-<section class="panel"><h2>3. Catálogo</h2><div class="tablebox"><table><thead><tr><th>Produto / marca comercial</th><th>Registro</th><th>Ingrediente ativo</th><th>Classe</th><th>Formulação</th><th>Titular / fabricante</th></tr></thead><tbody id="tbody"><tr><td colspan="6" class="empty">Carregue o CSV oficial para exibir os produtos.</td></tr></tbody></table></div><div class="pager"><span class="status" id="pageInfo">0 produtos</span><div class="actions" style="margin:0"><button class="btn secondary" id="prev" disabled>← Anterior</button><button class="btn secondary" id="next" disabled>Próxima →</button></div></div><div class="detail" id="detail"><h2>Ficha do produto</h2><div class="detailgrid" id="detailGrid"></div></div></section>
+<section class="panel" id="catalogPanel"><h2>3. Catálogo</h2><div class="tablebox"><table><thead><tr><th>Produto / marca comercial</th><th>Registro</th><th>Ingrediente ativo</th><th>Classe</th><th>Formulação</th><th>Titular / fabricante</th></tr></thead><tbody id="tbody"><tr><td colspan="6" class="empty">Carregue o CSV oficial para exibir os produtos.</td></tr></tbody></table></div><div class="pager"><span class="status" id="pageInfo">0 produtos</span><div class="actions" style="margin:0"><button class="btn secondary" id="prev" disabled>← Anterior</button><button class="btn secondary" id="next" disabled>Próxima →</button></div></div><div class="detail" id="detail"><h2>Ficha do produto</h2><div class="detailgrid" id="detailGrid"></div></div></section>
 <section class="panel" id="agromixPanel">
 <h2>4. AgroMix — compatibilidade de caldas</h2>
 <p class="source">Selecione dois produtos do catálogo para organizar uma consulta de mistura no tanque. Esta versão ainda não possui uma base validada de compatibilidade; por isso, não aprova nem reprova misturas automaticamente.</p>
@@ -98,8 +124,42 @@
 <div id="weatherAdvice" aria-live="polite"></div>
 <p class="source" style="margin-top:12px">O Delta T é estimado a partir de temperatura e umidade relativa. Alertas são indicativos, não autorizam nem recomendam aplicação. Confira sempre a bula, as regras locais e a orientação do responsável técnico. A previsão pode diferir das condições no talhão.</p>
 </section>
+
+<section class="panel" id="radarPanel">
+<h2>🌧️ Radar de chuva e alertas</h2>
+<p class="source">O radar abre uma fonte externa de visualização. A cobertura e o horário de atualização dependem do provedor; não substitui observação local nem previsão oficial.</p>
+<div class="actions"><a class="btn" href="https://www.rainviewer.com/weather-radar-map-live.html" target="_blank" rel="noopener">Abrir radar de chuva ↗</a><a class="btn secondary" href="#agroclimaPanel">Ver previsão local</a></div>
+<div class="notice" style="margin-top:12px">Use o radar para acompanhar a aproximação de precipitação. Confirme horário, localização e alertas oficiais antes de tomar decisões no campo.</div>
+</section>
+<section class="panel" id="calibracaoPanel">
+<h2>⚙️ AgroCalibração — vazão e bicos</h2>
+<p class="source">Calculadora teórica para pulverizador de barra. Informe volume-alvo, velocidade e espaçamento entre bicos. Confira a fórmula e valide com medição real de cada bico e manual do equipamento.</p>
+<div class="field-grid">
+<label>Volume de aplicação (L/ha)<input id="calRate" type="number" min="0" step="any" placeholder="Ex.: 100"></label>
+<label>Velocidade (km/h)<input id="calSpeed" type="number" min="0" step="any" placeholder="Ex.: 6"></label>
+<label>Espaçamento entre bicos (m)<input id="calSpacing" type="number" min="0" step="any" placeholder="Ex.: 0,5"></label>
+<label>Número de bicos<input id="calNozzles" type="number" min="1" step="1" placeholder="Ex.: 24"></label>
+</div>
+<div class="actions" style="margin-top:12px"><button class="btn" id="calcCalibration" type="button">Calcular vazão teórica</button><button class="btn secondary" id="clearCalibration" type="button">Limpar</button></div>
+<div id="calResult" class="output-box" aria-live="polite">Aguardando os dados.</div>
+<div class="notice" style="margin-top:12px">Fórmula para bico individual: L/min = (L/ha × km/h × espaçamento em m) ÷ 600. Resultado teórico; não define pressão, tipo de ponta ou adequação do produto. Faça teste de vazão com água e siga orientação técnica.</div>
+</section>
+<section class="panel" id="monitorPanel">
+<h2>🌾 AgroMonitor — caderno visual da lavoura</h2>
+<p class="source">Adicione uma foto para documentar a área, cultura, data e observações. Esta versão organiza registros visuais; não executa diagnóstico automático de pragas, doenças ou deficiência nutricional.</p>
+<div class="field-grid">
+<label>Cultura<input id="cropName" value="Cana-de-açúcar"></label>
+<label>Talhão<input id="cropField" placeholder="Identificação do talhão"></label>
+<label>Foto da lavoura<input id="cropPhoto" type="file" accept="image/*"></label>
+<label style="grid-column:1/-1">O que observou?<textarea id="cropNotes" rows="3" placeholder="Descreva falhas, plantas daninhas, manchas ou danos observados..."></textarea></label>
+</div>
+<img id="cropPreview" class="photo-preview" alt="Prévia da foto selecionada" hidden>
+<div class="actions" style="margin-top:12px"><button class="btn" id="saveCropNote" type="button">Salvar observação</button></div>
+<div id="cropStatus" class="source" role="status"></div>
+<div class="notice" style="margin-top:12px">A foto é exibida apenas para documentação nesta sessão. Não envie imagens de pessoas ou dados pessoais. Confirme suspeitas com profissional habilitado antes de qualquer intervenção.</div>
+</section>
 <section class="panel"><h2>Fonte e atualização</h2><p class="source">Fonte primária: Ministério da Agricultura e Pecuária (MAPA), Sistema de Agrotóxicos Fitossanitários — AGROFIT. A frequência informada no portal de dados abertos é diária. A data exibida acima é a data em que o arquivo foi carregado neste navegador, não uma confirmação da data de atualização do cadastro.</p><p class="source"><a href="https://agrofit.agricultura.gov.br/agrofit_cons/principal_agrofit_cons" target="_blank" rel="noopener">Consultar diretamente o AGROFIT ↗</a> · <a href="https://dados.agricultura.gov.br/dataset/sistema-de-agrotoxicos-fitossanitarios-agrofit" target="_blank" rel="noopener">Dados abertos do MAPA ↗</a></p></section>
-</main><footer>AgroLista Pro · Projeto demonstrativo de consulta cadastral · Confira sempre a bula e o registro vigente nas fontes oficiais.</footer>
+</main><footer>AgroLista Pro · Central de ferramentas agrícolas · AgroCentral IA · Confira sempre a bula e o registro vigente nas fontes oficiais.</footer>
 <script>
 (()=>{
 const $=id=>document.getElementById(id);let rows=[],filtered=[],page=0;const PAGE=30;let headers=[];
@@ -197,6 +257,13 @@ async function fetchAgroWeather(){if(!agroClimaCoords)return;setWeatherStatus('C
  }catch(err){setWeatherStatus('Não foi possível obter a previsão: '+err.message+' Confira a internet e tente novamente.');weatherEl('agroBigTemp').textContent='—°';weatherEl('agroCondition').textContent='Previsão indisponível';weatherEl('agroHourly').textContent='Sem previsão atualizada.';weatherEl('agroDays').textContent='Sem previsão atualizada.';weatherEl('weatherAdvice').innerHTML='<div class="weather-alert">Sem dados meteorológicos atualizados. Não use valores antigos para decidir uma aplicação.</div>';}finally{weatherEl('refreshWeather').disabled=!agroClimaCoords;}}
 function locateAgroWeather(){if(!('geolocation' in navigator)){setWeatherStatus('Este navegador não oferece geolocalização.');return;}setWeatherStatus('Solicitando permissão de GPS…');weatherEl('locateWeather').disabled=true;navigator.geolocation.getCurrentPosition(pos=>{agroClimaCoords=pos.coords;setWeatherStatus('GPS obtido com precisão aproximada de '+Math.round(pos.coords.accuracy)+' metros.');weatherEl('locateWeather').disabled=false;weatherEl('refreshWeather').disabled=false;fetchAgroWeather();},err=>{const msgs={1:'Permissão de localização negada. Autorize o acesso à localização nas configurações do navegador.',2:'Não foi possível determinar a localização. Verifique o GPS do aparelho.',3:'A localização demorou demais. Tente novamente em local aberto.'};setWeatherStatus(msgs[err.code]||'Erro ao obter localização.');weatherEl('locateWeather').disabled=false;},{enableHighAccuracy:true,timeout:20000,maximumAge:0});}
 weatherEl('locateWeather').addEventListener('click',locateAgroWeather);weatherEl('refreshWeather').addEventListener('click',fetchAgroWeather);
+// AgroCalibração
+$('calcCalibration').addEventListener('click',()=>{const rate=Number($('calRate').value),speed=Number($('calSpeed').value),spacing=Number($('calSpacing').value),n=Number($('calNozzles').value),box=$('calResult');if(!(rate>0&&speed>0&&spacing>0&&Number.isInteger(n)&&n>0)){box.textContent='Preencha todos os campos com valores válidos maiores que zero.';return}const q=rate*speed*spacing/600;box.innerHTML=`<strong>Vazão teórica por bico: ${q.toLocaleString('pt-BR',{maximumFractionDigits:3})} L/min</strong><br>Vazão total estimada (${n} bicos): ${(q*n).toLocaleString('pt-BR',{maximumFractionDigits:2})} L/min`;});
+$('clearCalibration').addEventListener('click',()=>{['calRate','calSpeed','calSpacing','calNozzles'].forEach(id=>$(id).value='');$('calResult').textContent='Aguardando os dados.'});
+// AgroMonitor: registro visual da lavoura
+$('cropPhoto').addEventListener('change',()=>{const file=$('cropPhoto').files[0],img=$('cropPreview');if(!file){img.hidden=true;return}if(!file.type.startsWith('image/')){$('cropStatus').textContent='Selecione uma imagem válida.';return}img.src=URL.createObjectURL(file);img.hidden=false});
+$('saveCropNote').addEventListener('click',()=>{if(!$('cropField').value.trim()&&!$('cropNotes').value.trim()&&!$('cropPhoto').files.length){$('cropStatus').textContent='Informe um talhão, observação ou selecione uma foto.';return}$('cropStatus').textContent='Observação preparada. Nesta versão, a foto não é enviada nem armazenada permanentemente; anote as informações em seu sistema de gestão agrícola.'});
+
 
 })();
 </script></body></html>
