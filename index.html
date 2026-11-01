@@ -62,13 +62,13 @@
 <div class="notice"><strong>⚠️ Consulta informativa:</strong> este catálogo não substitui bula, rótulo, receituário agronômico nem consulta oficial. A autorização depende da cultura, alvo, modalidade de uso e situação do registro.</div>
 <section class="stats"><div class="stat"><small>Produtos carregados</small><strong id="total">0</strong></div><div class="stat"><small>Resultados encontrados</small><strong id="shown">0</strong></div><div class="stat"><small>Base carregada em</small><strong id="loaded" style="font-size:16px">—</strong></div></section>
 <section class="panel"><h2>1. Carregar as bases oficiais</h2>
-<p class="source">Catálogo compartilhado pelo Supabase: os produtos cadastrados no banco são carregados automaticamente. As importações CSV abaixo ficam como ferramentas auxiliares e não são necessárias a cada visita.</p>
+<p class="source">Importe os dois arquivos oficiais do MAPA. A leitura é feita em blocos e mantém os dados no seu navegador. Os fertilizantes vêm do SIPEAGRO; os agrotóxicos, do AGROFIT.</p>
 <div class="actions">
 <a class="btn" href="https://dados.agricultura.gov.br/dataset/6c913699-e82e-4da3-a0a1-fb6c431e367f/resource/d30b30d7-e256-484e-9ab8-cd40974e1238/download/agrofitprodutosformulados.csv" target="_blank" rel="noopener">Baixar agrotóxicos (AGROFIT) ↓</a>
 <label class="btn secondary" for="csvFile">Importar agrotóxicos CSV</label><input id="csvFile" type="file" accept=".csv,text/csv" hidden>
 <a class="btn" href="https://dados.agricultura.gov.br/dataset/52a01565-72d6-410e-b21b-64035831a7be/resource/e0bbc9d5-f161-448b-a6d4-c7beb312ec33/download/sipeagrofertilizante.csv" target="_blank" rel="noopener">Baixar fertilizantes (SIPEAGRO) ↓</a>
 <label class="btn secondary" for="fertFile">Importar fertilizantes CSV</label><input id="fertFile" type="file" accept=".csv,text/csv" hidden>
-</div><div class="status" id="loadStatus" role="status">Conectando ao catálogo compartilhado do Supabase…</div></section>
+</div><div class="status" id="loadStatus" role="status">Importe uma ou as duas bases para começar. Os produtos serão reunidos no mesmo catálogo.</div></section>
 <section class="panel"><h2>2. Pesquisar produtos</h2><div class="toolbar"><div class="field"><label for="categoryFilter">Categoria</label><select id="categoryFilter" disabled><option value="">Todas as categorias</option><option value="Agrotóxico">Agrotóxicos</option><option value="Fertilizante">Fertilizantes</option></select></div><div class="field"><label for="q">Nome comercial, ingrediente ativo, registro ou fabricante</label><input id="q" placeholder="Ex.: nome do produto ou ingrediente ativo" disabled></div><div class="field"><label for="classFilter">Classe agronômica</label><select id="classFilter" disabled><option value="">Todas as classes</option></select></div><div class="field"><label for="formFilter">Formulação</label><select id="formFilter" disabled><option value="">Todas as formulações</option></select></div></div><div class="actions"><button class="btn secondary" id="clear" disabled>Limpar filtros</button><button class="btn secondary" id="export" disabled>Exportar resultados CSV</button></div></section>
 <section class="panel" id="catalogPanel"><h2>3. Catálogo</h2><div class="field" style="margin:12px 0 16px"><label for="catalogNameSearch">Procurar produto pelo nome comercial</label><input id="catalogNameSearch" type="search" placeholder="Digite o nome do produto…" disabled autocomplete="off"></div><div class="tablebox"><table><thead><tr><th>Categoria</th><th>Produto / marca comercial</th><th>Registro</th><th>Ingrediente ativo</th><th>Classe</th><th>Formulação</th><th>Titular / fabricante</th></tr></thead><tbody id="tbody"><tr><td colspan="7" class="empty">Carregue as bases CSV oficial para exibir os produtos.</td></tr></tbody></table></div><div class="pager"><span class="status" id="pageInfo">0 produtos</span><div class="actions" style="margin:0"><button class="btn secondary" id="prev" disabled>← Anterior</button><button class="btn secondary" id="next" disabled>Próxima →</button></div></div><div class="detail" id="detail"><h2>Ficha do produto</h2><div class="detailgrid" id="detailGrid"></div></div></section>
 <section class="panel" id="agromixPanel">
@@ -372,6 +372,65 @@ $('fertFile').addEventListener('change',async e=>{
 ['q','catalogNameSearch','categoryFilter','classFilter','formFilter'].forEach(id=>$(id).addEventListener((id==='q'||id==='catalogNameSearch')?'input':'change',filter));$('clear').addEventListener('click',()=>{$('q').value='';$('catalogNameSearch').value='';$('categoryFilter').value='';$('classFilter').value='';$('formFilter').value='';filter()});$('prev').addEventListener('click',()=>{if(page>0){page--;render()}});$('next').addEventListener('click',()=>{if((page+1)*PAGE<filtered.length){page++;render()}});
 $('export').addEventListener('click',()=>{let lines=[['Categoria',...headers],...filtered.map(r=>[r[6]||'Agrotóxico',...r.slice(0,6)])].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');let blob=new Blob(['\uFEFF'+lines],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='agrolista-resultados.csv';a.click();URL.revokeObjectURL(url)});
 
+
+// Catálogo compartilhado: leitura pública do Supabase (agrotóxicos + fertilizantes)
+async function loadSupabaseCatalog(){
+ const status=$('loadStatus');
+ status.textContent='Conectando ao catálogo compartilhado…';
+ const SUPABASE_URL='https://agppaxjnundfmgevcdfz.supabase.co';
+ const SUPABASE_KEY='sb_publishable_OyDONd6TuyY99I-sa3QUbQ_ZVUZhiPr';
+ const batch=1000;
+ let offset=0, imported=[];
+ try{
+  while(true){
+   const url=new URL(SUPABASE_URL+'/rest/v1/agrolista_produtos');
+   url.search=new URLSearchParams({
+    select:'id,categoria,nome_produto,numero_registro,fabricante,situacao,natureza_fisica,composicao,dados_extras',
+    order:'id.asc',limit:String(batch),offset:String(offset)
+   }).toString();
+   const response=await fetch(url.toString(),{
+    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}
+   });
+   if(!response.ok)throw new Error('Supabase respondeu HTTP '+response.status+'. Verifique a conexão e a permissão de leitura.');
+   const data=await response.json();
+   if(!Array.isArray(data))throw new Error('Resposta inesperada do catálogo.');
+   for(const p of data){
+    const extra=p.dados_extras&&typeof p.dados_extras==='object'?p.dados_extras:{};
+    const classe=extra.classe||extra.categoria||extra.classe_agronomica||'';
+    const extraSearch=JSON.stringify(extra);
+    imported.push([
+     p.nome_produto||'',
+     p.numero_registro||'',
+     p.composicao||'',
+     classe,
+     p.natureza_fisica||'',
+     p.fabricante||'',
+     p.categoria||'Agrotóxico',
+     extraSearch
+    ]);
+   }
+   status.textContent='Carregando catálogo compartilhado… '+imported.length.toLocaleString('pt-BR')+' produtos';
+   if(data.length<batch)break;
+   offset+=data.length;
+   await new Promise(resolve=>setTimeout(resolve,0));
+  }
+  headers=['produto','registro','ativo','classe','form','titular'];
+  rows=imported;
+  filtered=rows;
+  page=0;
+  $('total').textContent=rows.length.toLocaleString('pt-BR');
+  $('loaded').textContent=new Date().toLocaleDateString('pt-BR');
+  status.textContent='Catálogo compartilhado carregado: '+rows.length.toLocaleString('pt-BR')+' produtos (agrotóxicos e fertilizantes).';
+  ['q','categoryFilter','classFilter','formFilter','clear','export','catalogNameSearch'].forEach(id=>$(id).disabled=false);
+  setOptions('classFilter',rows.map(r=>get(r,'classe')));
+  setOptions('formFilter',rows.map(r=>get(r,'form')));
+  populateMix();
+  filter();
+ }catch(err){
+  status.textContent='Não foi possível carregar o catálogo compartilhado: '+err.message+' Você ainda pode importar um CSV manualmente.';
+ }
+}
+
 // AgroClima IA: GPS real + dados meteorológicos Open-Meteo
 let agroClimaCoords=null;
 const weatherEl=id=>document.getElementById(id);
@@ -433,45 +492,7 @@ $('cropPhoto').addEventListener('change',()=>{const file=$('cropPhoto').files[0]
 $('saveCropNote').addEventListener('click',()=>{if(!$('cropField').value.trim()&&!$('cropNotes').value.trim()&&!$('cropPhoto').files.length){$('cropStatus').textContent='Informe um talhão, observação ou selecione uma foto.';return}$('cropStatus').textContent='Observação preparada. Nesta versão, a foto não é enviada nem armazenada permanentemente; anote as informações em seu sistema de gestão agrícola.'});
 
 
-
-// Catálogo compartilhado Supabase — somente leitura no navegador.
-const SUPABASE_URL='https://agppaxjnundfmgevcdfz.supabase.co';
-const SUPABASE_ANON_KEY='sb_publishable_OyDONd6TuyY99I-sa3QUbQ_ZVUZhiPr';
-async function loadSharedCatalog(){
-  const status=$('loadStatus');
-  status.textContent='Conectando ao catálogo compartilhado…';
-  try{
-    const all=[]; let offset=0; const chunk=1000;
-    while(true){
-      const url=SUPABASE_URL+'/rest/v1/agrolista_produtos?select=categoria,nome_produto,numero_registro,fabricante,situacao,natureza_fisica,composicao,dados_extras&order=nome_produto.asc&limit='+chunk+'&offset='+offset;
-      const res=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY}});
-      if(!res.ok) throw new Error('Supabase respondeu HTTP '+res.status+'. Confira a tabela e a política de leitura.');
-      const batch=await res.json(); all.push(...batch);
-      if(batch.length<chunk) break;
-      offset+=chunk;
-      status.textContent='Carregando catálogo compartilhado… '+all.length.toLocaleString('pt-BR')+' registros';
-    }
-    headers=['Produto','Registro','Ingrediente ativo / garantias','Classe','Formulação / natureza física','Titular / fabricante'];
-    const shared=all.map(x=>[
-      x.nome_produto||'',x.numero_registro||'',x.composicao||'',
-      (x.dados_extras&&x.dados_extras.categoria_mapa)||x.categoria||'Fertilizante',
-      x.natureza_fisica||'',x.fabricante||'',x.categoria||'Fertilizante'
-    ]);
-    const localPesticides=rows.filter(r=>r[6]==='Agrotóxico');
-    rows=[...shared,...localPesticides]; filtered=rows; page=0;
-    $('total').textContent=rows.length.toLocaleString('pt-BR');
-    $('loaded').textContent=new Date().toLocaleDateString('pt-BR');
-    status.textContent=all.length
-      ? 'Catálogo compartilhado carregado: '+all.length.toLocaleString('pt-BR')+' registros do Supabase.'
-      : 'Conexão realizada, mas ainda não há produtos no banco. Importe o CSV no Table Editor do Supabase.';
-    ['q','categoryFilter','classFilter','formFilter','clear','export','catalogNameSearch'].forEach(id=>$(id).disabled=false);
-    setOptions('classFilter',rows.map(r=>r[3])); setOptions('formFilter',rows.map(r=>r[4]));
-    populateMix(); filter();
-  }catch(err){
-    status.textContent='Não foi possível carregar o catálogo compartilhado: '+err.message+' Você ainda pode usar a importação CSV local.';
-  }
-}
-loadSharedCatalog();
+loadSupabaseCatalog();
 
 })();
 </script></body></html>
