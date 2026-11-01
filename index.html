@@ -295,21 +295,46 @@ $('checkMix').addEventListener('click',()=>{
  const box=$('mixResult'),esc=x=>String(x||'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  if(chosen.length<2){box.innerHTML='<p class="notice">Escolha pelo menos dois produtos nas sugestões.</p>';box.classList.add('show');return}
  if(new Set(chosen.map(x=>x.rowIndex)).size!==chosen.length){box.innerHTML='<p class="notice">Você selecionou o mesmo produto mais de uma vez. Escolha produtos diferentes.</p>';box.classList.add('show');return}
- const selected=chosen.map(item=>{const r=rows[item.rowIndex];return {name:get(r,'produto'),active:get(r,'ativo'),form:get(r,'form'),reg:get(r,'registro'),holder:get(r,'titular')}});
+ const selected=chosen.map(item=>{
+  const r=rows[item.rowIndex];
+  let extra={};try{extra=JSON.parse(r[7]||'{}')}catch(_){}
+  return {name:get(r,'produto'),active:get(r,'ativo'),form:get(r,'form'),reg:get(r,'registro'),holder:get(r,'titular'),extra};
+ });
  const pairs=[];for(let i=0;i<selected.length;i++)for(let j=i+1;j<selected.length;j++)pairs.push([selected[i],selected[j]]);
  const q=s=>encodeURIComponent(s),searchUrl=query=>'https://www.google.com/search?q='+q(query);
- const productCards=selected.map((p,i)=>`<div class="kv"><strong>${i+1}. ${esc(p.name)}</strong><br><small>Ingrediente ativo: ${esc(p.active)}<br>Formulação: ${esc(p.form)}<br>Registro: ${esc(p.reg)}<br>Titular: ${esc(p.holder)}</small><p><a href="${searchUrl('"'+p.name+'" composição bula ficha de segurança FISPQ')}" target="_blank" rel="noopener">Pesquisar composição, bula e FISPQ ↗</a></p></div>`).join('');
- const pairLinks=pairs.map(([a,b])=>`<li><strong>${esc(a.name)} + ${esc(b.name)}</strong><br><a href="${searchUrl('"'+a.name+'" "'+b.name+'" mistura tanque compatibilidade incompatibilidade precipitação')}" target="_blank" rel="noopener">Pesquisar relatos e documentos desta combinação ↗</a></li>`).join('');
+ const listVal=v=>Array.isArray(v)?v.join('; '):(v||'');
+ const productCards=selected.map((p,i)=>{
+  const e=p.extra||{};
+  const crops=listVal(e.culturas),pests=listVal(e.pragas_nomes_comuns);
+  const scientific=listVal(e.pragas_nomes_cientificos);
+  const classTox=e.classe_toxicologica||'',classEnv=e.classe_ambiental||'';
+  const officialSearch=searchUrl('site:agrofit.agricultura.gov.br "'+p.name+'" "'+p.reg+'"');
+  const fdsSearch=searchUrl('"'+p.name+'" "'+p.holder+'" (FDS OR FISPQ OR ficha de segurança)');
+  return `<div class="kv"><strong>${i+1}. ${esc(p.name)}</strong><br><small>
+  Registro: ${esc(p.reg||'Não informado')}<br>Ingrediente ativo/composição declarada: ${esc(p.active||'Não informado')}<br>
+  Formulação: ${esc(p.form||'Não informada')}<br>Classe: ${esc(e.classe||'Não informada')}<br>
+  Titular: ${esc(p.holder||'Não informado')}<br>
+  ${crops?`Culturas no arquivo: ${esc(crops)}<br>`:''}
+  ${pests?`Alvos/pragas no arquivo: ${esc(pests)}<br>`:''}
+  ${scientific?`Nomes científicos: ${esc(scientific)}<br>`:''}
+  ${classTox?`Classificação toxicológica do arquivo: ${esc(classTox)}<br>`:''}
+  ${classEnv?`Classificação ambiental do arquivo: ${esc(classEnv)}<br>`:''}
+  </small><p><a href="${officialSearch}" target="_blank" rel="noopener">Buscar registro/bula no AGROFIT ↗</a> · <a href="${fdsSearch}" target="_blank" rel="noopener">Buscar FDS/FISPQ ↗</a></p></div>`;
+ }).join('');
+ const pairLinks=pairs.map(([a,b])=>`<li><strong>${esc(a.name)} + ${esc(b.name)}</strong><br>
+ <a href="${searchUrl('"'+a.name+'" "'+b.name+'" (mistura em tanque OR compatibilidade OR incompatibilidade OR precipitação)')}" target="_blank" rel="noopener">Pesquisar documentos desta combinação ↗</a></li>`).join('');
  const caution=[];
  if(selected.some(p=>!p.form))caution.push('A base não informou a formulação de todos os produtos.');
- if(selected.some(p=>!p.active))caution.push('A base não informou o ingrediente ativo de todos os produtos.');
- box.innerHTML=`<h3 style="margin:0 0 8px">Triagem técnica e pesquisa documental</h3>
- <div class="notice" style="margin:10px 0"><strong>⚪ Resultado: compatibilidade não verificada.</strong><br>O catálogo MAPA fornece dados cadastrais, mas não traz necessariamente a composição completa da formulação (coformulantes, solventes, sais e adjuvantes). Portanto, esta página não consegue calcular uma reação química nem declarar a mistura compatível ou incompatível apenas pelo nome/ingrediente ativo.</div>
- <h4>Produtos selecionados</h4><div class="detailgrid">${productCards}</div>
- <h4>Pesquisa direcionada por combinação</h4><p class="source">Abra as pesquisas abaixo para localizar bulas, FISPQ/FDS, fichas técnicas e relatos de incompatibilidade. Os resultados da internet precisam ser conferidos; sem documento específico, não há confirmação.</p><ul>${pairLinks}</ul>
+ if(selected.some(p=>!p.active))caution.push('A base não informou a composição/ingrediente ativo de todos os produtos.');
+ if(selected.some(p=>!p.extra||!p.extra.classe_toxicologica))caution.push('A classificação toxicológica não está disponível para todos os produtos selecionados.');
+ box.innerHTML=`<h3 style="margin:0 0 8px">AgroMix IA — dossiê técnico e triagem documental</h3>
+ <div class="notice" style="margin:10px 0"><strong>⚪ Resultado: compatibilidade não verificada.</strong><br>O catálogo AGROFIT oferece dados cadastrais e indicações de uso, mas não contém necessariamente a fórmula completa do produto. Ingredientes ativos não revelam todos os coformulantes, solventes, sais e adjuvantes. O AgroMix não pode declarar uma mistura segura nem prever uma reação apenas pelo nome ou pela classe de formulação.</div>
+ <h4>Ficha dos produtos selecionados</h4><div class="detailgrid">${productCards}</div>
+ <h4>Investigação da combinação</h4><p class="source">Pesquise a combinação exata, os registros e os documentos dos titulares. Priorize rótulo/bula vigente, FDS/FISPQ e parecer técnico. Resultado de busca ou relato isolado não comprova compatibilidade.</p><ul>${pairLinks}</ul>
  ${caution.length?`<div class="notice">${caution.map(esc).join('<br>')}</div>`:''}
- <div class="notice"><strong>O que precisa ser conferido na documentação:</strong> composição completa e concentração; pH; tipo de formulação; solventes e sais; restrições expressas de mistura; estabilidade, precipitação, hidrólise, oxidação e perda de eficácia. Uma reação possível em teoria não comprova que ela ocorrerá na calda real.</div>
- <p class="source">Esta função abre pesquisas externas; ela não lê automaticamente os sites nem valida resultados. “Nenhum alerta encontrado” não significa seguro. Não misture com base apenas nesta triagem. Confirme a bula vigente e consulte o responsável técnico ou os titulares dos registros.</p>`;
+ <div class="notice"><strong>Checklist de incompatibilidade física:</strong><br>Procure evidências de separação de fases persistente, flocos, grumos, pasta/gel, precipitado, espuma excessiva, aquecimento ou obstrução de filtros e pontas. Esses sinais podem indicar incompatibilidade física; não faça teste com produtos concentrados nem use uma mistura que apresente alteração. A avaliação técnica deve considerar também eficácia, fitotoxicidade e segurança.</div>
+ <div class="notice"><strong>Antes de qualquer mistura:</strong> confirme se a associação está permitida nas bulas/rótulos vigentes e para a cultura/alvo; respeite as restrições mais rigorosas e a orientação do responsável técnico. O cadastro do produto isolado não é autorização automática para misturá-lo com outro.</div>
+ <p class="source">Fontes de consulta: AGROFIT/MAPA e Manual técnico da Embrapa para mistura em tanque. Esta ferramenta organiza os dados do catálogo e abre pesquisas externas; não lê automaticamente os resultados, não substitui bula, receituário agronômico nem responsável técnico. Ausência de alerta não significa segurança.</p>`;
  box.classList.add('show');box.scrollIntoView({behavior:'smooth',block:'nearest'});
 });
 $('clearMix').addEventListener('click',()=>{['A','B','C','D'].forEach(w=>{$('mix'+w).value='';$('mix'+w+'Search').value='';$('mix'+w+'Results').innerHTML='';$('mix'+w+'Results').classList.remove('show')});$('mixResult').classList.remove('show');$('mixResult').innerHTML=''});
