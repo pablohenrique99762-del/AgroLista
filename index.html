@@ -70,7 +70,7 @@
 <label class="btn secondary" for="fertFile">Importar fertilizantes CSV</label><input id="fertFile" type="file" accept=".csv,text/csv" hidden>
 </div><div class="status" id="loadStatus" role="status">Importe uma ou as duas bases para começar. Os produtos serão reunidos no mesmo catálogo.</div></section>
 <section class="panel"><h2>2. Pesquisar produtos</h2><div class="toolbar"><div class="field"><label for="categoryFilter">Categoria</label><select id="categoryFilter" disabled><option value="">Todas as categorias</option><option value="Agrotóxico">Agrotóxicos</option><option value="Fertilizante">Fertilizantes</option></select></div><div class="field"><label for="q">Nome comercial, ingrediente ativo, registro ou fabricante</label><input id="q" placeholder="Ex.: nome do produto ou ingrediente ativo" disabled></div><div class="field"><label for="classFilter">Classe agronômica</label><select id="classFilter" disabled><option value="">Todas as classes</option></select></div><div class="field"><label for="formFilter">Formulação</label><select id="formFilter" disabled><option value="">Todas as formulações</option></select></div></div><div class="actions"><button class="btn secondary" id="clear" disabled>Limpar filtros</button><button class="btn secondary" id="export" disabled>Exportar resultados CSV</button></div></section>
-<section class="panel" id="catalogPanel"><h2>3. Catálogo</h2><div class="field" style="margin:12px 0 16px"><label for="catalogNameSearch">Procurar produto pelo nome comercial</label><input id="catalogNameSearch" type="search" placeholder="Digite o nome do produto…" disabled autocomplete="off"></div><div class="tablebox"><table><thead><tr><th>Categoria</th><th>Produto / marca comercial</th><th>Registro</th><th>Ingrediente ativo</th><th>Classe</th><th>Formulação</th><th>Titular / fabricante</th></tr></thead><tbody id="tbody"><tr><td colspan="7" class="empty">Carregue as bases CSV oficial para exibir os produtos.</td></tr></tbody></table></div><div class="pager"><span class="status" id="pageInfo">0 produtos</span><div class="actions" style="margin:0"><button class="btn secondary" id="prev" disabled>← Anterior</button><button class="btn secondary" id="next" disabled>Próxima →</button></div></div><div class="detail" id="detail"><h2>Ficha do produto</h2><div class="detailgrid" id="detailGrid"></div></div></section>
+<section class="panel" id="catalogPanel"><h2>3. Catálogo</h2><div class="field" style="margin:12px 0 16px"><label for="catalogNameSearch">Procurar produto pelo nome comercial</label><input id="catalogNameSearch" type="search" placeholder="Digite o nome do produto…" disabled autocomplete="off"></div><div class="tablebox"><table><thead><tr><th>Categoria</th><th>Produto / marca comercial</th><th>Registro</th><th>Ingrediente ativo</th><th>Classe</th><th>Formulação</th><th>Titular / fabricante</th></tr></thead><tbody id="tbody"><tr><td colspan="7" class="empty">Carregue as bases CSV oficial para exibir os produtos.</td></tr></tbody></table></div><div class="pager"><span class="status" id="pageInfo">0 produtos</span><div class="actions" style="margin:0"><button class="btn secondary" id="prev" disabled>← Anterior</button><button class="btn secondary" id="next" disabled>Próxima →</button></div></div><div class="detail" id="detail"><h2>Ficha técnica disponível</h2><p class="source">Informações consolidadas do cadastro importado. Campos ausentes não significam que o produto não tenha aquela característica; significam apenas que ela não veio nesta base.</p><div class="detailgrid" id="detailGrid"></div></div></section>
 <section class="panel" id="agromixPanel">
 <h2>4. AgroMix — compatibilidade de caldas</h2>
 <p class="source">Selecione de dois a quatro produtos. O AgroMix organiza uma triagem documental e abre pesquisas direcionadas sobre composição, bulas, FISPQ/FDS e possíveis incompatibilidades. Sem documentos completos e validação técnica, não aprova nem reprova misturas automaticamente.</p>
@@ -289,7 +289,43 @@ function searchMix(which){
 function load(text,name){let data=parseCSV(text.replace(/^\uFEFF/,''));if(data.length<2)throw Error('O arquivo parece vazio ou inválido.');headers=data[0].map(x=>x.trim());let required=['produto','ativo','classe'];if(required.every(k=>detect(headers,k)<0))throw Error('Não reconheci as colunas do CSV. Confira se selecionou o arquivo Produto Formulado.CSV do MAPA.');rows=data.slice(1).filter(r=>r.some(x=>x.trim()));filtered=rows;page=0;$('total').textContent=rows.length.toLocaleString('pt-BR');$('loaded').textContent=new Date().toLocaleDateString('pt-BR');$('loadStatus').textContent=`Arquivo carregado: ${name}. ${rows.length.toLocaleString('pt-BR')} produtos encontrados.`;['q','categoryFilter','classFilter','formFilter','clear','export','catalogNameSearch'].forEach(id=>$(id).disabled=false);setOptions('classFilter',rows.map(r=>get(r,'classe')));setOptions('formFilter',rows.map(r=>get(r,'form')));populateMix();filter()}
 function filter(){let q=norm($('q').value),nameQ=norm($('catalogNameSearch').value),cl=$('classFilter').value,fo=$('formFilter').value,cat=$('categoryFilter')?.value||'';filtered=rows.filter(r=>(!cat||r[6]===cat)&&(!q||r.some(c=>norm(c).includes(q)))&&(!nameQ||norm(get(r,'produto')).includes(nameQ))&&(!cl||get(r,'classe')===cl)&&(!fo||get(r,'form')===fo));page=0;render()}
 function render(){let start=page*PAGE,part=filtered.slice(start,start+PAGE),tb=$('tbody');tb.innerHTML='';if(!part.length){tb.innerHTML='<tr><td colspan="7" class="empty">Nenhum produto encontrado com esses filtros.</td></tr>'}else part.forEach(r=>{let tr=document.createElement('tr');let cat=document.createElement('td');cat.textContent=r[6]||'Agrotóxico';tr.append(cat);[['produto','product'],['registro',''],['ativo',''],['classe',''],['form',''],['titular','']].forEach(([k,cls])=>{let td=document.createElement('td');td.textContent=get(r,k)||'—';if(cls)td.className=cls;tr.append(td)});tr.tabIndex=0;tr.title='Clique para ver os campos disponíveis';tr.addEventListener('click',()=>showDetail(r));tb.append(tr)});$('shown').textContent=filtered.length.toLocaleString('pt-BR');$('pageInfo').textContent=filtered.length?`Exibindo ${start+1}–${Math.min(start+PAGE,filtered.length)} de ${filtered.length.toLocaleString('pt-BR')}`:'0 produtos';$('prev').disabled=page===0;$('next').disabled=start+PAGE>=filtered.length;$('export').disabled=!filtered.length}
-function showDetail(r){let box=$('detail'),grid=$('detailGrid');grid.innerHTML='';['Categoria',...headers].forEach((h,i)=>{let val=(i===0?(r[6]||'Agrotóxico'):(r[i-1]||'')).trim();if(!val)return;let div=document.createElement('div');div.className='kv';let sm=document.createElement('small');sm.textContent=h;let strong=document.createElement('strong');strong.textContent=val;div.append(sm,strong);grid.append(div)});box.classList.add('show');box.scrollIntoView({behavior:'smooth',block:'nearest'})}
+function parseExtra(r){try{const value=JSON.parse(r?.[7]||'{}');return value&&typeof value==='object'?value:{}}catch(_){return {}}}
+function showDetail(r){
+ const box=$('detail'),grid=$('detailGrid');grid.innerHTML='';
+ const add=(label,value)=>{
+  if(value===undefined||value===null||value==='')return;
+  const normalized=Array.isArray(value)?value.filter(Boolean).join('; '):(typeof value==='object'?JSON.stringify(value):String(value));
+  if(!normalized.trim())return;
+  const div=document.createElement('div');div.className='kv';
+  const sm=document.createElement('small');sm.textContent=label;
+  const strong=document.createElement('strong');strong.textContent=normalized;
+  div.append(sm,strong);grid.append(div);
+ };
+ add('Categoria',r[6]||'Agrotóxico');
+ headers.forEach((h,i)=>add(h,r[i]));
+ const extra=parseExtra(r);
+ const labels={
+  culturas:'Culturas cadastradas',pragas_nomes_comuns:'Alvos / pragas (nome comum)',
+  pragas_nomes_cientificos:'Alvos / pragas (nome científico)',
+  classe_toxicologica:'Classificação toxicológica',classe_ambiental:'Classificação ambiental',
+  situacao:'Situação no cadastro',organicos:'Indicação de produto orgânico',
+  modo_de_acao:'Modo de ação',formulacao:'Formulação detalhada',
+  ingrediente_ativo:'Ingrediente ativo',titular_de_registro:'Titular do registro',
+  empresa_pais_tipo:'Empresa / país / tipo'
+ };
+ Object.entries(labels).forEach(([key,label])=>add(label,extra[key]));
+ const extras=document.createElement('p');extras.className='source';
+ extras.textContent='Os campos exibidos dependem dos dados disponíveis no arquivo importado. Confirme sempre a situação atual, a bula e as indicações diretamente no AGROFIT/MAPA.';
+ grid.append(extras);
+ const links=document.createElement('div');links.className='actions';links.style.gridColumn='1/-1';
+ const product=String(get(r,'produto')||''),reg=String(get(r,'registro')||'');
+ const makeLink=(label,url)=>{const a=document.createElement('a');a.className='btn secondary';a.href=url;a.target='_blank';a.rel='noopener';a.textContent=label;links.append(a)};
+ makeLink('Consultar no AGROFIT ↗','https://www.google.com/search?q='+encodeURIComponent('site:agrofit.agricultura.gov.br/agrofit_cons "'+product+'" "'+reg+'"'));
+ makeLink('Pesquisar bula / rótulo ↗','https://www.google.com/search?q='+encodeURIComponent('"'+product+'" "'+reg+'" bula rótulo'));
+ makeLink('Pesquisar FDS / FISPQ ↗','https://www.google.com/search?q='+encodeURIComponent('"'+product+'" FDS OR FISPQ'));
+ grid.append(links);
+ box.classList.add('show');box.scrollIntoView({behavior:'smooth',block:'nearest'})
+}
 $('checkMix').addEventListener('click',()=>{
  const chosen=['A','B','C','D'].map(which=>{const idx=$('mix'+which).value;return idx===''?null:mixProducts[Number(idx)]}).filter(Boolean);
  const box=$('mixResult'),esc=x=>String(x||'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -298,7 +334,7 @@ $('checkMix').addEventListener('click',()=>{
  const selected=chosen.map(item=>{
   const r=rows[item.rowIndex];
   let extra={};try{extra=JSON.parse(r[7]||'{}')}catch(_){}
-  return {name:get(r,'produto'),active:get(r,'ativo'),form:get(r,'form'),reg:get(r,'registro'),holder:get(r,'titular'),extra};
+  return {name:get(r,'produto'),active:get(r,'ativo'),form:get(r,'form'),reg:get(r,'registro'),holder:get(r,'titular'),category:r[6]||'Agrotóxico',status:extra.situacao||'',nature:extra.natureza_fisica||'',extra};
  });
  const pairs=[];for(let i=0;i<selected.length;i++)for(let j=i+1;j<selected.length;j++)pairs.push([selected[i],selected[j]]);
  const q=s=>encodeURIComponent(s),searchUrl=query=>'https://www.google.com/search?q='+q(query);
@@ -308,21 +344,30 @@ $('checkMix').addEventListener('click',()=>{
   const crops=listVal(e.culturas),pests=listVal(e.pragas_nomes_comuns);
   const scientific=listVal(e.pragas_nomes_cientificos);
   const classTox=e.classe_toxicologica||'',classEnv=e.classe_ambiental||'';
-  const officialSearch=searchUrl('site:agrofit.agricultura.gov.br "'+p.name+'" "'+p.reg+'"');
+  const officialSearch=searchUrl('site:agrofit.agricultura.gov.br/agrofit_cons "'+p.name+'" "'+p.reg+'"');
+  const labelSearch=searchUrl('"'+p.name+'" "'+p.reg+'" bula rótulo');
   const fdsSearch=searchUrl('"'+p.name+'" "'+p.holder+'" (FDS OR FISPQ OR ficha de segurança)');
   return `<div class="kv"><strong>${i+1}. ${esc(p.name)}</strong><br><small>
-  Registro: ${esc(p.reg||'Não informado')}<br>Ingrediente ativo/composição declarada: ${esc(p.active||'Não informado')}<br>
-  Formulação: ${esc(p.form||'Não informada')}<br>Classe: ${esc(e.classe||'Não informada')}<br>
-  Titular: ${esc(p.holder||'Não informado')}<br>
+  Categoria: ${esc(p.category)}<br>Registro: ${esc(p.reg||'Não informado')}<br>Ingrediente ativo/composição declarada: ${esc(p.active||'Não informado')}<br>
+  Formulação: ${esc(p.form||'Não informada')}<br>Natureza física: ${esc(p.nature||'Não informada')}<br>Classe: ${esc(e.classe||'Não informada')}<br>
+  Titular: ${esc(p.holder||'Não informado')}<br>${p.status?`Situação no arquivo: ${esc(p.status)}<br>`:''}
   ${crops?`Culturas no arquivo: ${esc(crops)}<br>`:''}
   ${pests?`Alvos/pragas no arquivo: ${esc(pests)}<br>`:''}
   ${scientific?`Nomes científicos: ${esc(scientific)}<br>`:''}
   ${classTox?`Classificação toxicológica do arquivo: ${esc(classTox)}<br>`:''}
   ${classEnv?`Classificação ambiental do arquivo: ${esc(classEnv)}<br>`:''}
-  </small><p><a href="${officialSearch}" target="_blank" rel="noopener">Buscar registro/bula no AGROFIT ↗</a> · <a href="${fdsSearch}" target="_blank" rel="noopener">Buscar FDS/FISPQ ↗</a></p></div>`;
+  ${e.modo_de_acao?`Modo de ação informado: ${esc(e.modo_de_acao)}<br>`:''}
+  </small><p><a href="${officialSearch}" target="_blank" rel="noopener">Consultar cadastro no AGROFIT ↗</a> · <a href="${labelSearch}" target="_blank" rel="noopener">Pesquisar bula/rótulo ↗</a> · <a href="${fdsSearch}" target="_blank" rel="noopener">Pesquisar FDS/FISPQ ↗</a></p></div>`;
  }).join('');
- const pairLinks=pairs.map(([a,b])=>`<li><strong>${esc(a.name)} + ${esc(b.name)}</strong><br>
- <a href="${searchUrl('"'+a.name+'" "'+b.name+'" (mistura em tanque OR compatibilidade OR incompatibilidade OR precipitação)')}" target="_blank" rel="noopener">Pesquisar documentos desta combinação ↗</a></li>`).join('');
+ const pairLinks=pairs.map(([a,b])=>{
+  const exact='"'+a.name+'" "'+b.name+'"';
+  const mixSearch=searchUrl(exact+' ("mistura em tanque" OR compatibilidade OR incompatibilidade OR precipitação OR floculação)');
+  const labelPair=searchUrl(exact+' bula rótulo mistura tanque');
+  return `<li style="margin:0 0 12px"><strong>${esc(a.name)} + ${esc(b.name)}</strong><br>
+  <span class="source">Registros: ${esc(a.reg||'não informado')} + ${esc(b.reg||'não informado')}</span><br>
+  <a href="${mixSearch}" target="_blank" rel="noopener">Pesquisar relatos e documentos da combinação ↗</a> ·
+  <a href="${labelPair}" target="_blank" rel="noopener">Pesquisar orientação em bula/rótulo ↗</a></li>`;
+ }).join('');
  const caution=[];
  if(selected.some(p=>!p.form))caution.push('A base não informou a formulação de todos os produtos.');
  if(selected.some(p=>!p.active))caution.push('A base não informou a composição/ingrediente ativo de todos os produtos.');
@@ -331,8 +376,15 @@ $('checkMix').addEventListener('click',()=>{
  <div class="notice" style="margin:10px 0"><strong>⚪ Resultado: compatibilidade não verificada.</strong><br>O catálogo AGROFIT oferece dados cadastrais e indicações de uso, mas não contém necessariamente a fórmula completa do produto. Ingredientes ativos não revelam todos os coformulantes, solventes, sais e adjuvantes. O AgroMix não pode declarar uma mistura segura nem prever uma reação apenas pelo nome ou pela classe de formulação.</div>
  <h4>Ficha dos produtos selecionados</h4><div class="detailgrid">${productCards}</div>
  <h4>Investigação da combinação</h4><p class="source">Pesquise a combinação exata, os registros e os documentos dos titulares. Priorize rótulo/bula vigente, FDS/FISPQ e parecer técnico. Resultado de busca ou relato isolado não comprova compatibilidade.</p><ul>${pairLinks}</ul>
- ${caution.length?`<div class="notice">${caution.map(esc).join('<br>')}</div>`:''}
- <div class="notice"><strong>Checklist de incompatibilidade física:</strong><br>Procure evidências de separação de fases persistente, flocos, grumos, pasta/gel, precipitado, espuma excessiva, aquecimento ou obstrução de filtros e pontas. Esses sinais podem indicar incompatibilidade física; não faça teste com produtos concentrados nem use uma mistura que apresente alteração. A avaliação técnica deve considerar também eficácia, fitotoxicidade e segurança.</div>
+ ${caution.length?`<div class="notice"><strong>Lacunas encontradas nos dados:</strong><br>${caution.map(esc).join('<br>')}</div>`:''}
+ <div class="kv" style="margin:12px 0"><strong>Roteiro de verificação técnica</strong><ol>
+ <li>Confirme o número de registro e a situação atual de cada produto no AGROFIT.</li>
+ <li>Confira se as bulas/rótulos vigentes permitem o uso para a cultura, alvo e modalidade pretendidos.</li>
+ <li>Verifique restrições de mistura, ordem de adição, pH, qualidade da água e necessidade de adjuvantes nas orientações oficiais.</li>
+ <li>Consulte a FDS/FISPQ de cada formulado e solicite posicionamento dos titulares quando houver dúvida.</li>
+ <li>Peça avaliação do responsável técnico antes de qualquer associação; a triagem desta tela não substitui essa análise.</li>
+ </ol></div>
+ <div class="notice"><strong>Checklist de incompatibilidade física:</strong><br>Observe separação de fases persistente, flocos, grumos, pasta/gel, precipitado, espuma excessiva, aquecimento ou obstrução de filtros e pontas. Esses sinais podem indicar incompatibilidade física; não use mistura que apresente alteração. Não faça teste com produtos concentrados. A avaliação técnica também precisa considerar eficácia, fitotoxicidade e segurança.</div>
  <div class="notice"><strong>Antes de qualquer mistura:</strong> confirme se a associação está permitida nas bulas/rótulos vigentes e para a cultura/alvo; respeite as restrições mais rigorosas e a orientação do responsável técnico. O cadastro do produto isolado não é autorização automática para misturá-lo com outro.</div>
  <p class="source">Fontes de consulta: AGROFIT/MAPA e Manual técnico da Embrapa para mistura em tanque. Esta ferramenta organiza os dados do catálogo e abre pesquisas externas; não lê automaticamente os resultados, não substitui bula, receituário agronômico nem responsável técnico. Ausência de alerta não significa segurança.</p>`;
  box.classList.add('show');box.scrollIntoView({behavior:'smooth',block:'nearest'});
