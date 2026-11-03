@@ -41,9 +41,158 @@
 .mix-suggestion:active,.mix-suggestion:focus{background:#dcebe3;color:#10251b;outline:2px solid #4c8a68;outline-offset:-2px}
 .mix-suggestion:hover{background:#e8f1ec;color:#10251b}
 .mix-selected{font-size:12px;color:#52645a;margin-top:5px}
+
+/* ===== REDESIGN VISUAL AGROLISTA PRO ===== */
+:root{
+ --green:#145b38;--green2:#24784c;--bg:#f2f6f2;--card:#ffffff;
+ --ink:#17251d;--muted:#65756a;--line:#dce7de;--gold:#e7b94e;
+ --soft:#edf5ef;--shadow:0 8px 24px rgba(20,65,39,.07);
+}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{background:radial-gradient(ellipse at 10% 0%,#e5f1e7 0,transparent 34%),var(--bg);color:var(--ink)}
+.hero{
+ position:relative;overflow:hidden;padding:22px 20px 30px;
+ background:linear-gradient(115deg,rgba(10,48,32,.98),rgba(21,91,55,.94) 58%,rgba(43,116,65,.92));
+ isolation:isolate;
+}
+.hero:before,.hero:after{content:"";position:absolute;z-index:-1;pointer-events:none}
+.hero:before{width:390px;height:220px;right:-55px;bottom:-105px;border-radius:50%;background:radial-gradient(ellipse,#8fcf72aa 0,transparent 68%);transform:rotate(-18deg)}
+.hero:after{inset:auto 0 0;height:5px;background:linear-gradient(90deg,#d5b94d,#a6d36d,#d5b94d)}
+.hero .wrap{position:relative}
+.top{align-items:center}
+.brand{font-size:15px;letter-spacing:.08em;color:#e1f2e5;display:flex;align-items:center;gap:8px}
+.hero-tools{display:flex;align-items:center;gap:9px}
+.hero-tool{width:42px;height:42px;border:1px solid #ffffff55;border-radius:13px;background:#ffffff18;color:white;font-size:20px;font-weight:800;cursor:pointer;backdrop-filter:blur(8px);transition:.2s}
+.hero-tool:hover{background:#ffffff30;transform:translateY(-2px)}
+.hero h1{max-width:780px;margin:25px 0 10px;font-size:clamp(29px,5vw,46px);letter-spacing:-.035em}
+.hero p{font-size:15px;line-height:1.65;max-width:660px}
+.main{max-width:1240px;padding:20px 18px 58px}
+.agro-nav{position:sticky;top:8px;z-index:30;display:flex;gap:8px;overflow-x:auto;padding:9px;margin:0 0 18px;border:1px solid #dce8de;border-radius:16px;background:#ffffffdf;backdrop-filter:blur(14px);box-shadow:0 5px 18px #183d2410;scrollbar-width:thin}
+.agro-nav a{display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border:1px solid transparent;border-radius:11px;background:transparent;color:#28583b;font-size:13px;font-weight:750;transition:.18s}
+.agro-nav a:hover,.agro-nav a:focus{background:#e7f2e9;border-color:#cfe1d2;outline:none}
+.panel,.stat{border:1px solid #e0e9e1;border-radius:19px;background:var(--card);box-shadow:var(--shadow)}
+.panel{padding:20px;margin-bottom:18px;scroll-margin-top:82px}
+.panel h2{display:flex;align-items:center;gap:9px;font-size:19px;letter-spacing:-.02em}
+#central{background:linear-gradient(145deg,#fff,#f5faf6)}
+#central h2{font-size:21px}
+.module-grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:13px}
+.module-tile{position:relative;display:flex;flex-direction:column;gap:7px;min-height:112px;padding:17px;border:1px solid #dce9df;border-radius:16px;background:linear-gradient(145deg,#fff,#f3f8f4);color:var(--ink);text-decoration:none;box-shadow:0 3px 12px #173b2510;transition:transform .2s,box-shadow .2s,border-color .2s}
+.module-tile:after{content:"↗";position:absolute;right:15px;top:13px;color:#8ba795;font-weight:800}
+.module-tile:hover{transform:translateY(-3px);border-color:#a9cdb2;box-shadow:0 10px 24px #173b2518}
+.module-tile strong{font-size:16px;color:#174b35}
+.module-tile small{font-size:12px;line-height:1.5;color:#65756a;padding-right:14px}
+.stats{gap:13px}
+.stat{padding:16px 18px;position:relative;overflow:hidden}
+.stat:after{content:"";position:absolute;width:70px;height:70px;right:-22px;bottom:-30px;border-radius:50%;background:#e8f3e9}
+.stat small{font-weight:650;font-size:12px}
+.stat strong{position:relative;z-index:1;font-size:27px;color:#175638}
+.field input,.field select,.field-grid input,.field-grid select,.field-grid textarea{
+ min-height:46px;border:1px solid #d5e1d7;border-radius:12px;background:#fbfdfb;padding:11px 13px;transition:border-color .18s,box-shadow .18s
+}
+.field input:focus,.field select:focus,.field-grid input:focus,.field-grid select:focus,.field-grid textarea:focus{
+ outline:none;border-color:#4c9a65;box-shadow:0 0 0 3px #4c9a651c
+}
+.field label,.field-grid label{font-weight:750;color:#52675a}
+.btn{border-radius:12px;padding:12px 17px;box-shadow:0 3px 8px #173b2512;transition:transform .18s,filter .18s,box-shadow .18s}
+.btn:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.04);box-shadow:0 7px 15px #173b2520}
+.btn.secondary{background:#eaf3ec;color:#1c5b37;border:1px solid #d8e8dc;box-shadow:none}
+.notice{border-radius:14px;line-height:1.6}
+.tablebox{border-radius:14px;border-color:#dce7de}
+th{background:#edf5ef;color:#3d5d48;padding:13px}
+td{padding:13px}
+tr:hover td{background:#f8fbf8}
+.product{color:#175b38}
+.detailgrid{gap:12px}
+.kv{border:1px solid #e0e9e1;border-radius:12px;background:#f7faf7;padding:13px}
+.weather-card{border:1px solid #dce8df;border-radius:15px;background:linear-gradient(145deg,#fff,#f3f8f4);padding:14px}
+.weather-card strong{color:#174f33}
+.agro-hero{background:linear-gradient(125deg,#103f2c,#267052);box-shadow:inset 0 1px #ffffff20}
+.agro-hour{border-radius:15px;box-shadow:0 3px 10px #163d2510}
+.agro-day{border-radius:15px;background:linear-gradient(145deg,#fff,#f2f8f3)}
+.bottle-panel{border-top:0;border-left:5px solid #e58a18}
+.bottle-visual{border-radius:16px;background:#f8fbf8}
+.output-box{border-radius:14px}
+footer{background:#123d2b;color:#d5e8da;margin-top:20px;padding:28px 16px}
+.status,.source{line-height:1.6}
+button:focus-visible,a:focus-visible{outline:3px solid #83bf91;outline-offset:3px}
+@media(min-width:900px){
+ .main{padding-top:24px}
+ #central .module-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .panel{padding:22px}
+}
+@media(max-width:720px){
+ .hero{padding:17px 15px 25px}
+ .hero h1{margin-top:20px;font-size:30px}
+ .hero p{font-size:13px}
+ .brand{font-size:12px}
+ .hero-tool{width:39px;height:39px}
+ .tag{display:none}
+ .main{padding:13px 11px 40px}
+ .panel{padding:15px;border-radius:16px;margin-bottom:13px}
+ .panel h2{font-size:17px}
+ .stats{gap:9px}
+ .stat{padding:13px;border-radius:15px}
+ .stat strong{font-size:23px}
+ .module-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .module-tile{min-height:106px;padding:13px;border-radius:14px}
+ .module-tile strong{font-size:14px}
+ .module-tile small{font-size:11px}
+ .agro-nav{top:5px;margin:0 0 13px;padding:7px;border-radius:13px}
+ .agro-nav a{font-size:12px;padding:9px 11px}
+ .weather-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .detailgrid{grid-template-columns:1fr}
+ .toolbar{grid-template-columns:1fr}
+ .bottle-controls{grid-template-columns:1fr}
+ .tablebox{margin-left:-2px;margin-right:-2px}
+}
+@media(max-width:390px){
+ .module-grid{grid-template-columns:1fr 1fr}
+ .module-tile{min-height:100px}
+ .stats{grid-template-columns:1fr 1fr}
+}
+body.dark{
+ --bg:#101a14;--card:#18251d;--ink:#e7f0e9;--muted:#a5b5a9;--line:#314438;--soft:#203529;
+ background:radial-gradient(ellipse at 10% 0%,#1b3927 0,transparent 34%),var(--bg);color:var(--ink)
+}
+body.dark .panel,body.dark .stat{background:#18251d;border-color:#314438;box-shadow:0 8px 24px #0003}
+body.dark #central{background:linear-gradient(145deg,#1b2b21,#17241c)}
+body.dark .module-tile,body.dark .kv,body.dark .weather-card,body.dark .agro-day,body.dark .bottle-visual{background:linear-gradient(145deg,#1d2d23,#18251d);border-color:#344a3a;color:#e7f0e9}
+body.dark .module-tile strong,body.dark .stat strong,body.dark .weather-card strong{color:#b8e5c2}
+body.dark .module-tile small,body.dark .source,body.dark .status,body.dark .field label,body.dark .field-grid label{color:#a9bbae}
+body.dark .agro-nav{background:#17251deF;border-color:#344a3a}
+body.dark .agro-nav a{color:#d2ead8}
+body.dark .agro-nav a:hover{background:#294633}
+body.dark .field input,body.dark .field select,body.dark .field-grid input,body.dark .field-grid select,body.dark .field-grid textarea{background:#111d16;border-color:#3a5141;color:#e7f0e9}
+body.dark .btn.secondary{background:#294633;color:#d7efdd;border-color:#3b5b45}
+body.dark th{background:#24382a;color:#d4ead9}
+body.dark td{border-color:#314438}
+body.dark tr:hover td{background:#203529}
+body.dark .notice{background:#392f19;border-color:#68542a;color:#f0dfb2}
+body.dark .output-box,.dark .weather-status{background:#203529;border-color:#385b43;color:#dceee0}
+body.dark .agro-hour{background:#203529;border-color:#344a3a;color:#e7f0e9}
+body.dark .bottle-result{background:#302719;border-color:#65502c;color:#f5e7c8}
+body.dark footer{background:#09130d}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+
+
+@media(max-width:720px){
+ .agro-nav{display:none;position:fixed;left:12px;right:12px;top:68px;max-height:72vh;overflow:auto;flex-direction:column;align-items:stretch;background:#fff;border:1px solid #dce8de;box-shadow:0 18px 45px #102d1c35;padding:10px}
+ .agro-nav.nav-open{display:flex}
+ .agro-nav a{width:100%;padding:12px 13px}
+ body.dark .agro-nav{background:#17251d;border-color:#344a3a}
+}
+@media(min-width:721px){.menu-toggle{display:none}}
+
 </style></head>
 <body>
-<header class="hero"><div class="wrap"><div class="top"><div class="brand">🌱 AgroLista Pro</div><span class="tag">Catálogo de consulta · Brasil</span></div><h1>Catálogo de agrotóxicos e fertilizantes</h1><p>Pesquise agrotóxicos e fertilizantes em um só catálogo, com filtros por categoria e consulta às bases oficiais do MAPA.</p></div></header>
+<header class="hero"><div class="wrap"><div class="top">
+  <div class="brand">🌱 AgroLista Pro</div>
+  <div class="hero-tools">
+    <span class="tag">Catálogo de consulta · Brasil</span>
+    <button class="hero-tool" id="themeToggle" type="button" aria-label="Ativar modo escuro" title="Alternar tema">◐</button>
+    <button class="hero-tool menu-toggle" id="menuToggle" type="button" aria-label="Abrir navegação" aria-expanded="false" title="Abrir menu">☰</button>
+  </div>
+</div><h1>Catálogo de agrotóxicos e fertilizantes</h1><p>Pesquise agrotóxicos e fertilizantes em um só catálogo, com filtros por categoria e consulta às bases oficiais do MAPA.</p></div></header>
 <main class="main wrap">
 <nav class="agro-nav" aria-label="Navegação AgroCentral">
 <a href="#central">🌱 AgroCentral</a><a href="#agroclimaPanel">🌦️ AgroClima</a><a href="#radarPanel">🌧️ Radar</a><a href="#calibracaoPanel">⚙️ Calibração</a><a href="#monitorPanel">🌾 AgroMonitor</a><a href="#catalogPanel">🧪 Catálogo</a>
@@ -775,4 +924,44 @@ $('appClear').addEventListener('click', () => {
 loadSupabaseCatalog();
 
 })();
-</script></body></html>
+</script><script>
+
+// Navegação compacta e alternância de tema do AgroLista Pro
+(function(){
+  const menu = document.getElementById('menuToggle');
+  const nav = document.querySelector('.agro-nav');
+  const theme = document.getElementById('themeToggle');
+  if(menu && nav){
+    menu.addEventListener('click',()=>{
+      const opened = nav.classList.toggle('nav-open');
+      menu.setAttribute('aria-expanded',String(opened));
+      menu.setAttribute('aria-label',opened?'Fechar navegação':'Abrir navegação');
+      menu.textContent = opened ? '✕' : '☰';
+    });
+    nav.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{
+      nav.classList.remove('nav-open');
+      menu.setAttribute('aria-expanded','false');
+      menu.setAttribute('aria-label','Abrir navegação');
+      menu.textContent='☰';
+    }));
+  }
+  if(theme){
+    const applyTheme = dark=>{
+      document.body.classList.toggle('dark',dark);
+      theme.textContent=dark?'☀':'◐';
+      theme.setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo escuro');
+      theme.title=dark?'Ativar modo claro':'Ativar modo escuro';
+    };
+    let saved = null;
+    try{saved=localStorage.getItem('agrolista-theme')}catch(e){}
+    applyTheme(saved==='dark');
+    theme.addEventListener('click',()=>{
+      const dark=!document.body.classList.contains('dark');
+      applyTheme(dark);
+      try{localStorage.setItem('agrolista-theme',dark?'dark':'light')}catch(e){}
+    });
+  }
+})();
+
+</script>
+</body></html>
