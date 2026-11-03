@@ -47,7 +47,7 @@
 <main class="main wrap">
 <nav class="agro-nav" aria-label="Navegação AgroCentral">
 <a href="#central">🌱 AgroCentral</a><a href="#agroclimaPanel">🌦️ AgroClima</a><a href="#radarPanel">🌧️ Radar</a><a href="#calibracaoPanel">⚙️ Calibração</a><a href="#monitorPanel">🌾 AgroMonitor</a><a href="#catalogPanel">🧪 Catálogo</a>
-</nav>
+<a href="#applicationPanel">🚜 Aplicação</a></nav>
 <section class="panel" id="central">
 <h2>🌱 AgroCentral IA — central de ferramentas</h2>
 <p class="source">Acesse os módulos do AgroLista Pro em um só lugar. O módulo AgroDrone IA não faz parte desta versão.</p>
@@ -58,7 +58,10 @@
 
 <a class="module-tile" href="#monitorPanel"><strong>🌾 AgroMonitor</strong><small>Registro e análise visual da lavoura</small></a>
 <a class="module-tile" href="#catalogPanel"><strong>🧪 AgroLista + AgroMix</strong><small>Produtos, fichas e consulta cadastral</small></a>
-</div></section>
+<a class="module-tile" href="#applicationPanel">
+<strong>🚜 Aplicação</strong>
+<span>Modalidades, épocas e restrições de aplicação</span>
+</a></div></section>
 <div class="notice"><strong>⚠️ Consulta informativa:</strong> este catálogo não substitui bula, rótulo, receituário agronômico nem consulta oficial. A autorização depende da cultura, alvo, modalidade de uso e situação do registro.</div>
 <section class="stats"><div class="stat"><small>Produtos carregados</small><strong id="total">0</strong></div><div class="stat"><small>Resultados encontrados</small><strong id="shown">0</strong></div><div class="stat"><small>Base carregada em</small><strong id="loaded" style="font-size:16px">—</strong></div></section>
 <section class="panel"><h2>1. Carregar as bases oficiais</h2>
@@ -85,6 +88,69 @@
 <div id="mixResult" class="detail" aria-live="polite"></div>
 <div class="notice" style="margin:14px 0 0"><strong>Segurança:</strong> “sem informação” não significa compatível. Não misture produtos com base apenas nesta consulta. Confira as bulas e rótulos vigentes de todos os produtos, as restrições de mistura, a cultura e o alvo autorizados; em caso de dúvida, consulte o responsável técnico ou os titulares dos registros. Não faça teste de mistura como substituto dessas verificações.</div>
 </section>
+<section class="panel" id="applicationPanel">
+  <h2>🚜 Aplicação — consulta de produtos</h2>
+
+  <p class="source">
+    Consulte modalidades, épocas de aplicação e restrições dos produtos cadastrados.
+  </p>
+
+  <div class="field-grid">
+
+    <div class="field">
+      <label for="appProduct">Pesquisar produto</label>
+      <input id="appProduct" type="search"
+        placeholder="Digite o nome comercial ou ingrediente">
+    </div>
+
+    <div class="field">
+      <label for="appModality">Modalidade de aplicação</label>
+      <select id="appModality">
+        <option value="">Todas as modalidades</option>
+        <option value="terrestre">Terrestre</option>
+        <option value="aerea">Aérea</option>
+        <option value="drone">Drone</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="appTiming">Época de aplicação</label>
+      <select id="appTiming">
+        <option value="">Todas as épocas</option>
+        <option value="pre">Pré-emergência</option>
+        <option value="pos">Pós-emergência</option>
+        <option value="ambos">Ambos</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="appCrop">Cultura</label>
+      <input id="appCrop" placeholder="Ex.: Cana-de-açúcar">
+    </div>
+
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="appSearch" type="button">
+      🔎 Consultar produto
+    </button>
+    <button class="btn secondary" id="appClear" type="button">
+      Limpar
+    </button>
+  </div>
+
+  <div id="appResult" class="detail" aria-live="polite">
+    <p>Pesquise um produto para consultar suas informações de aplicação.</p>
+  </div>
+
+  <div class="notice">
+    <strong>⚠️ Atenção:</strong>
+    aplicação aérea não significa autorização para drones.
+    As modalidades, épocas e restrições devem ser confirmadas
+    na bula e no registro oficial vigente do produto.
+  </div>
+</section>
+
 <section class="panel bottle-panel" id="bottleTestPanel">
 <div class="bottle-heading"><div><span class="bottle-kicker">AGROMIX · FERRAMENTA DE APOIO</span><h2>5. Teste da garrafa</h2></div><span class="bottle-icon">🧪</span></div>
 <p class="source">Informe a vazão e as doses por hectare para calcular quantidades proporcionais. Você pode adicionar quantos produtos precisar. O cálculo não determina se a mistura é compatível.</p>
@@ -568,6 +634,143 @@ $('clearCalibration').addEventListener('click',()=>{['calRate','calSpeed','calSp
 $('cropPhoto').addEventListener('change',()=>{const file=$('cropPhoto').files[0],img=$('cropPreview');if(!file){img.hidden=true;return}if(!file.type.startsWith('image/')){$('cropStatus').textContent='Selecione uma imagem válida.';return}img.src=URL.createObjectURL(file);img.hidden=false});
 $('saveCropNote').addEventListener('click',()=>{if(!$('cropField').value.trim()&&!$('cropNotes').value.trim()&&!$('cropPhoto').files.length){$('cropStatus').textContent='Informe um talhão, observação ou selecione uma foto.';return}$('cropStatus').textContent='Observação preparada. Nesta versão, a foto não é enviada nem armazenada permanentemente; anote as informações em seu sistema de gestão agrícola.'});
 
+
+// ===== MÓDULO APLICAÇÃO =====
+const appResult = $('appResult');
+
+// Lê os campos extras sem presumir que dados ausentes autorizem uma modalidade.
+function appFields(obj, pattern, out = []) {
+  if (!obj || typeof obj !== 'object') return out;
+
+  Object.entries(obj).forEach(([key, value]) => {
+    if (pattern.test(norm(key))) {
+      const text = Array.isArray(value)
+        ? value.map(v => typeof v === 'object' ? '' : String(v ?? '')).filter(Boolean).join(', ')
+        : (value && typeof value === 'object' ? '' : String(value ?? ''));
+      if (text.trim()) out.push(text);
+    }
+    if (value && typeof value === 'object') appFields(value, pattern, out);
+  });
+  return out;
+}
+
+function appHasModality(extra, modality) {
+  const modeFields = appFields(extra, /modalidade|via aplicacao|tipo aplicacao|restricao drone|aereo|terrestre|pulverizacao/);
+  if (!modeFields.length) return false;
+
+  const text = norm(modeFields.join(' '));
+  if (modality === 'terrestre') {
+    return /terrestre|trator|pulverizador de barra|costal/.test(text);
+  }
+  if (modality === 'aerea') {
+    // "Aérea" genérica não é tratada como autorização para drone.
+    return /aerea|aviao|aviao agricola|helicoptero/.test(text);
+  }
+  if (modality === 'drone') {
+    return /drone|aeronave remotamente pilotada|remotamente pilotada|arp|rpas|uas|uav/.test(text);
+  }
+  return true;
+}
+
+function appHasTiming(extra, timing) {
+  const values = appFields(extra, /epoca aplicacao|pre pos|momento aplicacao|estadio|emergencia/);
+  if (!values.length) return false;
+  const text = norm(values.join(' '));
+  if (timing === 'pre') return /pre emergencia|pre-emergencia|antes da emergencia/.test(text);
+  if (timing === 'pos') return /pos emergencia|pos-emergencia|apos a emergencia/.test(text);
+  if (timing === 'ambos') return /ambos|pre e pos|pre-emergencia.*pos-emergencia/.test(text);
+  return true;
+}
+
+function appShow() {
+  const query = norm($('appProduct').value);
+  const modality = $('appModality').value;
+  const timing = $('appTiming').value;
+  const crop = norm($('appCrop').value);
+
+  appResult.replaceChildren();
+  appResult.classList.add('show');
+
+  const found = rows.filter(r => {
+    const name = get(r, 'produto') || '';
+    const active = get(r, 'ativo') || '';
+    if (query && !norm(name + ' ' + active).includes(query)) return false;
+
+    const extra = parseExtra(r);
+    if (modality && !appHasModality(extra, modality)) return false;
+    if (timing && !appHasTiming(extra, timing)) return false;
+
+    if (crop) {
+      const cropFields = appFields(extra, /cultura/);
+      if (!cropFields.length || !norm(cropFields.join(' ')).includes(crop)) return false;
+    }
+    return true;
+  });
+
+  if (!found.length) {
+    const p = document.createElement('p');
+    p.className = 'notice';
+    p.textContent = modality || timing || crop
+      ? 'Nenhum produto corresponde aos filtros com os dados disponíveis. A base pode não conter modalidade, época ou cultura para os produtos pesquisados. Confira a bula vigente e o AGROFIT.'
+      : 'Nenhum produto encontrado no catálogo. Confira o nome ou ingrediente ativo.';
+    appResult.appendChild(p);
+    return;
+  }
+
+  if (found.length > 30) {
+    const info = document.createElement('p');
+    info.className = 'source';
+    info.textContent = `Mostrando os primeiros 30 de ${found.length.toLocaleString('pt-BR')} resultados. Refine a pesquisa para localizar o produto.`;
+    appResult.appendChild(info);
+  }
+
+  found.slice(0, 30).forEach(r => {
+    const extra = parseExtra(r);
+    const name = get(r, 'produto') || 'Produto sem nome';
+    const active = get(r, 'ativo') || 'Não informado';
+    const modes = appFields(extra, /modalidade|via aplicacao|tipo aplicacao|restricao drone|aereo|terrestre|pulverizacao/);
+    const times = appFields(extra, /epoca aplicacao|pre pos|momento aplicacao|estadio|emergencia/);
+    const crops = appFields(extra, /cultura/);
+    const restrictions = appFields(extra, /restricao|observacao aplicacao|intervalo de seguranca/);
+
+    const card = document.createElement('div');
+    card.className = 'detail show';
+    card.style.marginBottom = '12px';
+
+    const addLine = (label, value) => {
+      const p = document.createElement('p');
+      const strong = document.createElement('strong');
+      strong.textContent = label + ': ';
+      p.append(strong, document.createTextNode(value));
+      card.appendChild(p);
+    };
+
+    addLine('Produto', name);
+    addLine('Ingrediente ativo / composição', active);
+    addLine('Modalidades encontradas na base', modes.join(' | ') || 'Não informado nesta base');
+    addLine('Época de aplicação', times.join(' | ') || 'Não informada nesta base');
+    addLine('Culturas cadastradas', crops.join(' | ') || 'Não informadas nesta base');
+    addLine('Restrições', restrictions.join(' | ') || 'Não informadas nesta base');
+
+    const warning = document.createElement('small');
+    warning.textContent = 'A consulta exibe somente os dados existentes no catálogo. Confirme a cultura, o alvo, a modalidade (inclusive autorização específica para drone), a época e as restrições na bula oficial vigente e no registro do produto. Campo vazio ou ausência de resultado não significa autorização.';
+    card.appendChild(warning);
+    appResult.appendChild(card);
+  });
+}
+
+$('appSearch').addEventListener('click', appShow);
+['appProduct', 'appCrop'].forEach(id => $(id).addEventListener('input', appShow));
+['appModality', 'appTiming'].forEach(id => $(id).addEventListener('change', appShow));
+
+$('appClear').addEventListener('click', () => {
+  $('appProduct').value = '';
+  $('appModality').value = '';
+  $('appTiming').value = '';
+  $('appCrop').value = '';
+  appResult.classList.add('show');
+  appResult.textContent = 'Pesquise um produto para consultar.';
+});
 
 loadSupabaseCatalog();
 
