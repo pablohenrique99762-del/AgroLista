@@ -183,6 +183,71 @@ body.dark footer{background:#09130d}
 }
 @media(min-width:721px){.menu-toggle{display:none}}
 
+
+/* ===== EVOLUÇÃO VISUAL 2.0 ===== */
+.hero{padding:25px 20px 38px}
+.hero:before{width:520px;height:300px;right:-70px;bottom:-160px;background:radial-gradient(ellipse,#9bd77b55 0,transparent 68%)}
+.hero:after{height:4px;opacity:.9}
+.hero h1{font-size:clamp(34px,6vw,58px);max-width:850px;letter-spacing:-.055em;line-height:1.02;margin:27px 0 14px}
+.hero h1 em{font-style:normal;color:#c5e8a5}
+.hero p{font-size:15px;max-width:620px;color:#dceee1}
+.hero-eyebrow{display:flex;align-items:center;gap:9px;margin-top:28px;color:#c3e2cb;font-size:10px;font-weight:900;letter-spacing:.16em}
+.hero-live-dot{width:8px;height:8px;border-radius:50%;background:#a6e28a;box-shadow:0 0 0 4px #a6e28a25}
+.hero-meta{display:flex;gap:10px;align-items:center;margin-top:20px;color:#d2e9d8;font-size:12px;font-weight:700}
+.dashboard-welcome{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 18px;padding:19px 21px;border:1px solid #dce9df;border-radius:18px;background:linear-gradient(105deg,#fff 0%,#f1f8f2 100%);box-shadow:0 7px 22px #183d240b}
+.welcome-copy{min-width:0}
+.welcome-kicker{font-size:10px;font-weight:900;letter-spacing:.14em;color:#538064}
+.welcome-copy h2{margin:5px 0 4px;font-size:clamp(17px,3vw,22px);letter-spacing:-.025em;color:#183d29}
+.welcome-copy p{margin:0;color:#6b7b70;font-size:12px;line-height:1.5}
+.welcome-action{flex:0 0 auto;display:inline-flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;background:#175b38;color:white;text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 4px 12px #175b3825;transition:.2s}
+.welcome-action:hover{transform:translateY(-2px);background:#24784c}
+#central{border-color:#d6e6d9;background:linear-gradient(145deg,#ffffff,#f5faf6)}
+#central h2{font-size:22px}
+.module-tile{min-height:128px;padding:18px;overflow:hidden}
+.module-tile:before{content:"";position:absolute;right:-28px;bottom:-38px;width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,#e7f3e9aa,#d8ebdc22);transition:transform .25s}
+.module-tile:hover:before{transform:scale(1.25)}
+.module-tile strong{font-size:16px;position:relative;z-index:1}
+.module-tile small{position:relative;z-index:1;max-width:210px}
+.module-tile:after{z-index:2}
+.panel{box-shadow:0 5px 22px rgba(20,65,39,.055)}
+.panel h2{padding-bottom:10px;border-bottom:1px solid #edf2ed}
+.notice{box-shadow:0 3px 12px #5c491008}
+.agro-nav a{position:relative}
+.agro-nav a:active{transform:scale(.98)}
+.stat{transition:transform .2s,box-shadow .2s}
+.stat:hover{transform:translateY(-2px);box-shadow:0 12px 26px #173b2515}
+.btn{letter-spacing:.005em}
+footer{position:relative;overflow:hidden}
+footer:before{content:"🌱";position:absolute;right:7%;top:2px;font-size:75px;opacity:.06;transform:rotate(-18deg)}
+/* Improved focus and touch feedback */
+button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}
+button:active,.btn:active{transform:scale(.985)}
+@media(max-width:720px){
+ .hero{padding:19px 15px 30px}
+ .hero-eyebrow{margin-top:22px;font-size:9px}
+ .hero h1{font-size:36px;line-height:1.03;margin:22px 0 12px}
+ .hero-meta{font-size:11px;margin-top:15px}
+ .dashboard-welcome{align-items:flex-start;flex-direction:column;padding:16px;margin-bottom:13px;gap:12px}
+ .welcome-action{width:100%;justify-content:space-between}
+ .module-tile{min-height:116px}
+ #central h2{font-size:18px}
+}
+@media(max-width:360px){
+ .hero h1{font-size:32px}
+ .welcome-copy h2{font-size:17px}
+ .module-tile{padding:11px}
+}
+body.dark .dashboard-welcome{background:linear-gradient(105deg,#1b2b21,#17251d);border-color:#344a3a}
+body.dark .welcome-copy h2{color:#e0efe3}
+body.dark .welcome-copy p{color:#a9bbae}
+body.dark .welcome-kicker{color:#9dc9a7}
+body.dark .panel h2{border-color:#314438}
+body.dark #central{border-color:#344a3a;background:linear-gradient(145deg,#1b2b21,#17241c)}
+
+
+.agro-nav a.is-active{background:#e5f2e8;border-color:#c8dfcd;color:#145b38;box-shadow:inset 0 -2px #6eae7d}
+body.dark .agro-nav a.is-active{background:#294633;border-color:#42684d;color:#e0f2e4}
+
 </style></head>
 <body>
 <header class="hero"><div class="wrap"><div class="top">
@@ -192,11 +257,20 @@ body.dark footer{background:#09130d}
     <button class="hero-tool" id="themeToggle" type="button" aria-label="Ativar modo escuro" title="Alternar tema">◐</button>
     <button class="hero-tool menu-toggle" id="menuToggle" type="button" aria-label="Abrir navegação" aria-expanded="false" title="Abrir menu">☰</button>
   </div>
-</div><h1>Catálogo de agrotóxicos e fertilizantes</h1><p>Pesquise agrotóxicos e fertilizantes em um só catálogo, com filtros por categoria e consulta às bases oficiais do MAPA.</p></div></header>
+</div><div class="hero-eyebrow"><span class="hero-live-dot"></span> CENTRAL DE INTELIGÊNCIA AGRÍCOLA</div><h1>Gestão agrícola em <em>um só lugar.</em></h1><p>Consulte produtos, acompanhe condições meteorológicas e acesse ferramentas para apoiar suas decisões no campo.</p><div class="hero-meta"><span>🌱 AgroLista Pro</span><span>•</span><span>Plataforma agrícola</span></div></div></header>
 <main class="main wrap">
 <nav class="agro-nav" aria-label="Navegação AgroCentral">
 <a href="#central">🌱 AgroCentral</a><a href="#agroclimaPanel">🌦️ AgroClima</a><a href="#radarPanel">🌧️ Radar</a><a href="#calibracaoPanel">⚙️ Calibração</a><a href="#monitorPanel">🌾 AgroMonitor</a><a href="#catalogPanel">🧪 Catálogo</a>
 <a href="#applicationPanel">🚜 Aplicação</a></nav>
+<section class="dashboard-welcome" aria-label="Resumo da plataforma">
+  <div class="welcome-copy">
+    <span class="welcome-kicker">PAINEL DE FERRAMENTAS</span>
+    <h2>Bem-vindo ao seu centro de operações</h2>
+    <p>Escolha uma ferramenta para começar. Seus dados e consultas continuam nos módulos abaixo.</p>
+  </div>
+  <a class="welcome-action" href="#central">Explorar módulos <span>↗</span></a>
+</section>
+
 <section class="panel" id="central">
 <h2>🌱 AgroCentral IA — central de ferramentas</h2>
 <p class="source">Acesse os módulos do AgroLista Pro em um só lugar. O módulo AgroDrone IA não faz parte desta versão.</p>
@@ -961,6 +1035,30 @@ loadSupabaseCatalog();
       try{localStorage.setItem('agrolista-theme',dark?'dark':'light')}catch(e){}
     });
   }
+})();
+
+</script>
+<script>
+
+(function(){
+  const nav=document.querySelector('.agro-nav');
+  if(!nav) return;
+  const links=[...nav.querySelectorAll('a[href^="#"]')];
+  const sections=links.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  if(!('IntersectionObserver' in window)) return;
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting) return;
+      const id='#'+entry.target.id;
+      links.forEach(a=>{
+        const active=a.getAttribute('href')===id;
+        a.classList.toggle('is-active',active);
+        if(active) a.setAttribute('aria-current','location');
+        else a.removeAttribute('aria-current');
+      });
+    });
+  },{rootMargin:'-18% 0px -68% 0px',threshold:0});
+  sections.forEach(section=>observer.observe(section));
 })();
 
 </script>
